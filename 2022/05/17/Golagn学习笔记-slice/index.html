@@ -11,7 +11,7 @@
   
   <title>
     
-      Tag 
+      Slice 
       
       
       |
@@ -132,21 +132,173 @@ MathJax = {
 </script>
 
 
-  <!-- 标签页 url形式：https://yoursite/tags/ -->
-  <div class="container tag-index">
-    <div>
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/golang/" rel="tag">golang</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/network/" rel="tag">network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/redis/" rel="tag">redis</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" rel="tag">微服务</a><span class="tag-list-count">1</span></li></ul>
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">Slice</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-05-17 23:05:57
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags" title="Tags"></i>
+                
+                <span class="span--tag">
+                  <a href="/tags/golang/" title="golang">
+                    <b>#</b> golang
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h3 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h3><ul>
+<li>切变的长度是可变的</li>
+<li>切片是对底层数组的引用</li>
+<li>切片存储的元素类型是相同的</li>
+<li>可以存储相同的元素</li>
+<li>Append函数可以进行增加元素，也可以用于删除切片元素</li>
+<li>要从切片a中删除索引为<code>index</code>的元素，操作方法是<code>a = append(a[:index], a[index+1:]...)</code></li>
+</ul>
+<h3 id="Make-Slice"><a href="#Make-Slice" class="headerlink" title="Make Slice"></a>Make Slice</h3><ul>
+<li>len </li>
+<li>cap</li>
+</ul>
+<p><code>a := [...]int&#123;0, 1, 2, 3, 4, 5, 6, 7, 8, 9&#125;</code></p>
+<p><code>s1 := a[5:8] // len=3 cap=5</code></p>
+<p>Len &#x3D; end - start </p>
+<p>Cap &#x3D; 原数组长度 - start </p>
+<h4 id="切片的四种定义方式："><a href="#切片的四种定义方式：" class="headerlink" title="切片的四种定义方式："></a>切片的四种定义方式：</h4><p>1 、<code>slice01 := []int&#123;1, 2, 3&#125; // 声明并且初始化长度为3，容量为3的切片</code>  </p>
+<p>2、<code>var slice01 []int // 声明空切片，len=0， cap=0</code>  </p>
+<p>3、<code>slice03 := make([]int, 3) // 通过make分配3个空间，len=3, cap=3, 默认值是0</code>  </p>
+<p>4、<code>var slice04 = make([]int, 3) // 通过make分配3个空间，len=3, cap=3, 默认值是0</code>  </p>
+<h4 id="二维定义"><a href="#二维定义" class="headerlink" title="二维定义"></a>二维定义</h4><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">res := <span class="built_in">make</span>([][]<span class="type">int</span>, <span class="number">4</span>)</span><br><span class="line"><span class="keyword">for</span> i := <span class="keyword">range</span> res &#123;</span><br><span class="line">   res[i] = <span class="built_in">make</span>([]<span class="type">int</span>, <span class="number">4</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>切片是可以跟nil值进行判断的，但是俩个切片不可以直接进行比较。</p>
+<h3 id="底层结构-x2F-原理"><a href="#底层结构-x2F-原理" class="headerlink" title="底层结构&#x2F;原理"></a>底层结构&#x2F;原理</h3><p><img src="/images/slice01.png" alt="slice01"></p>
+<h3 id="扩容"><a href="#扩容" class="headerlink" title="扩容"></a>扩容</h3><h4 id="规则"><a href="#规则" class="headerlink" title="规则"></a>规则</h4><ul>
+<li>如果期望容量大于当前容量的两倍，则新分配的容量等于期望容量</li>
+<li>如果期望容量小于当前容量的两倍<ul>
+<li>如果当前容量小于1024，则新分配的容量等于当前容量的两倍</li>
+<li>如果大于1024则每次增加1.25倍，直到大于期望容量为止。</li>
+</ul>
+</li>
+</ul>
+<p>在容量小于1024时防止小块内存的频繁分配和拷贝，通过每次增长至少两倍的方式，能够减少可能重新分配的次数；当容量大于1024时，这时如果只是单纯的还是以至少两倍的空间扩容，很可能会浪费额外的空间（也许某次扩容期望的容量只是稍大于当前容量）</p>
+<h4 id="触发扩容条件"><a href="#触发扩容条件" class="headerlink" title="触发扩容条件"></a>触发扩容条件</h4><p>当调用append函数进行增加元素时</p>
+<ul>
+<li>当切片cap够时，就会修改底层数组。</li>
+<li>当切片cap不够，底层数组就会拷贝一个新的数组，并且切片指向新的数组</li>
+</ul>
+<h3 id="非线程安全"><a href="#非线程安全" class="headerlink" title="非线程安全"></a>非线程安全</h3><h4 id="线程安全"><a href="#线程安全" class="headerlink" title="线程安全"></a>线程安全</h4><p>多个线程访问同一个对象时，调用这个对象的行为都可以获得正确的结果，那么这个对象就是线程安全。</p>
+<p>若多个线程同时执行写操作，一般考虑线程同步，否则会影响线程安全。</p>
+<p>切片是对数组的抽象，其底层就是数组，在并发下写数据到相同的索引位会被覆盖，并且切片也有自动扩容的功能，当切片要进行扩容时，就要替换底层的数组，在切换底层数组时，多个goroutine是同时运行的，哪个goroutine先运行是不确定的，不论哪个goroutine先写入内存，肯定就有一次写入会覆盖之前的写入，所以在动态扩容时并发写入数组是不安全的。</p>
+<h3 id="解决非线程安全"><a href="#解决非线程安全" class="headerlink" title="解决非线程安全"></a>解决非线程安全</h3><ul>
+<li>互斥锁</li>
+<li>读写锁</li>
+<li>原子操作</li>
+<li>Sync.once</li>
+<li>sync.atomic</li>
+<li>channel</li>
+</ul>
+<h3 id="deep-copy"><a href="#deep-copy" class="headerlink" title="deep copy"></a>deep copy</h3><p>拷贝数据本身，创建一个新对象，新创建的对象与原对象不共享内存，新创建的对象在内存中开辟一个新的内存地址，新对象值修改时不会影响原对象值。</p>
+<p><code>copy(slice2, slice1)</code></p>
+<h3 id="切片注意事项"><a href="#切片注意事项" class="headerlink" title="切片注意事项"></a>切片注意事项</h3><ul>
+<li>定义空切片，没有指向底层数组</li>
+<li>超出底层数组范围 </li>
+<li>切片动态增长</li>
+<li>切片作为参数传递时，是值传递，但是在参数内进行append参数或者切片修改时，改到的是底层数组的值。</li>
+<li>切片本身是引用类型</li>
+</ul>
+<h3 id="题目思考"><a href="#题目思考" class="headerlink" title="题目思考"></a>题目思考</h3><p><code>slice01 :=  []&#123;1, 2, 3&#125;</code></p>
+<p><code>slice02 := append(slice02, []int&#123;4,5,6&#125;...)</code></p>
+<p> 问：len 和 cap append 后是多少</p>
+<p>答：在64位机器中，int占8个字节，所以append之后len&#x3D;7，预估有7 * 8 &#x3D; 56字节的大小需要分配，对应上图最接近的符合条件的span等级是6，即64字节，所以新的slice的cap &#x3D; 64 &#x2F; 8。</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/05/17/%E7%BD%91%E7%BB%9CIO%E8%AF%A6%E8%A7%A3/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-05-17 23:05:57
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags" title="Tags"></i>
+                    
+                    <span class="span--tag">
+                      <a href="/tags/golang/" title="golang">
+                        <b>#</b> golang
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2022/05/18/%E4%BB%80%E4%B9%88%E6%98%AF%E5%BE%AE%E6%9C%8D%E5%8A%A1%EF%BC%8C%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%94%A8%E5%BE%AE%E6%9C%8D%E5%8A%A1/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%89%B9%E7%82%B9"><span class="toc-text">特点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Make-Slice"><span class="toc-text">Make Slice</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%87%E7%89%87%E7%9A%84%E5%9B%9B%E7%A7%8D%E5%AE%9A%E4%B9%89%E6%96%B9%E5%BC%8F%EF%BC%9A"><span class="toc-text">切片的四种定义方式：</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BA%8C%E7%BB%B4%E5%AE%9A%E4%B9%89"><span class="toc-text">二维定义</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84-x2F-%E5%8E%9F%E7%90%86"><span class="toc-text">底层结构&#x2F;原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%A9%E5%AE%B9"><span class="toc-text">扩容</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A7%84%E5%88%99"><span class="toc-text">规则</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A7%A6%E5%8F%91%E6%89%A9%E5%AE%B9%E6%9D%A1%E4%BB%B6"><span class="toc-text">触发扩容条件</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9D%9E%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8"><span class="toc-text">非线程安全</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8"><span class="toc-text">线程安全</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%E9%9D%9E%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8"><span class="toc-text">解决非线程安全</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#deep-copy"><span class="toc-text">deep copy</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%87%E7%89%87%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="toc-text">切片注意事项</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE%E6%80%9D%E8%80%83"><span class="toc-text">题目思考</span></a></li></ol>
+      
     </div>
   </div>
-  
 
   
+<script src="/js/catalog.js"></script>
 
-  
 
-  
 
-  
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
 
         
 <div class="footer">
@@ -413,12 +565,12 @@ MathJax = {
       </a>
       <div class="share-content hidden">
         
-          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + tags + '&url=' + http%3A%2F%2Fgithub.com%2Ftags%2Findex.html + '" target="_blank" title="Twitter">
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + Slice + '&url=' + http%3A%2F%2Fgithub.com%2F2022%2F05%2F17%2FGolagn%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-slice%2F + '" target="_blank" title="Twitter">
             <i class="iconfont icon-twitter"></i>
           </a>
         
         
-          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/tags/index.html" target="_blank" title="Facebook">
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/2022/05/17/Golagn%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-slice/" target="_blank" title="Facebook">
             <i class="iconfont icon-facebooksquare"></i>
           </a>
         
