@@ -188,11 +188,11 @@ MathJax = {
 <h3 id="底层结构-x2F-原理"><a href="#底层结构-x2F-原理" class="headerlink" title="底层结构&#x2F;原理"></a>底层结构&#x2F;原理</h3><ul>
 <li>基本map原理</li>
 </ul>
-<p><img src="/images/map01.png" alt="map01"></p>
+<p><img src="/../images/map01.png" alt="map01"></p>
 <ul>
 <li>golang map原理</li>
 </ul>
-<p><img src="/images/map02.png" alt="map02"></p>
+<p><img src="/../images/map02.png" alt="map02"></p>
 <h4 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 初始化一个可容纳10个元素的map  B为1</span></span><br><span class="line">info := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="type">string</span>]<span class="type">string</span>, <span class="number">10</span>)</span><br></pre></td></tr></table></figure>
 
 <ul>
@@ -210,11 +210,20 @@ MathJax = {
 </li>
 </ul>
 <p>每个bmap可以存储8个键值对，当不够存储时需要溢出桶，并将当前bmap的overflow字段指向溢出桶的位置。</p>
-<h5 id="原码"><a href="#原码" class="headerlink" title="原码"></a>原码</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">	</span><br></pre></td></tr></table></figure>
+<h5 id="原码"><a href="#原码" class="headerlink" title="原码"></a>原码</h5><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">makemap</span><span class="params">(t *maptype, hint <span class="type">int</span>, h *hmap)</span></span> *hmap &#123;</span><br><span class="line">	...</span><br><span class="line">	<span class="comment">// initialize Hmap</span></span><br><span class="line">	<span class="keyword">if</span> h == <span class="literal">nil</span> &#123;</span><br><span class="line">		h = <span class="built_in">new</span>(hmap)</span><br><span class="line">	&#125;</span><br><span class="line">	h.hash0 = fastrand() <span class="comment">// 获得hash因子</span></span><br><span class="line">	</span><br><span class="line">	<span class="comment">// Find the size parameter B which will hold the requested # of elements.</span></span><br><span class="line">	<span class="comment">// For hint &lt; 0 overLoadFactor returns false since hint &lt; bucketCnt.</span></span><br><span class="line">	B := <span class="type">uint8</span>(<span class="number">0</span>)</span><br><span class="line">	 <span class="comment">// 进行B个数的判断</span></span><br><span class="line">	<span class="keyword">for</span> overLoadFactor(hint, B) &#123;</span><br><span class="line">		B++</span><br><span class="line">	&#125;</span><br><span class="line">	h.B = B</span><br><span class="line">	<span class="comment">// allocate initial hash table</span></span><br><span class="line">	<span class="comment">// if B == 0, the buckets field is allocated lazily later (in mapassign)</span></span><br><span class="line">	<span class="comment">// If hint is large zeroing this memory could take a while.</span></span><br><span class="line">	<span class="keyword">if</span> h.B != <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">var</span> nextOverflow *bmap</span><br><span class="line">		h.buckets, nextOverflow = makeBucketArray(t, h.B, <span class="literal">nil</span>)  <span class="comment">// 新建桶和溢出桶</span></span><br><span class="line">		<span class="keyword">if</span> nextOverflow != <span class="literal">nil</span> &#123;</span><br><span class="line">			h.extra = <span class="built_in">new</span>(mapextra)</span><br><span class="line">			h.extra.nextOverflow = nextOverflow</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> h</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
 
+<h4 id="写入数据"><a href="#写入数据" class="headerlink" title="写入数据"></a>写入数据</h4><p><code>info [&quot;name&quot;]=&quot;junkewu&quot;</code></p>
+<p>在map中写入数据，内部执行流程为：</p>
+<ul>
+<li>第一步：结合哈希因子和键name生产哈希值01101110001111110111011011</li>
+<li>第二步：获取哈希值的后B位，并根据后B位的值来决定将此键值对存放的那个桶中（bmap）。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">将哈希值01101110001111110111011011和桶掩码（B个为1的二进制）进行&amp;运算，最终得到哈希值的后B位的值。假设当B为1时，其结果为0：</span><br><span class="line">哈希值：01101110001111110111011011</span><br><span class="line">桶掩码：00000000000000000000000001</span><br><span class="line">结果：  00000000000000000000000000 = 0</span><br><span class="line">找桶的原则实际上是根据后B位的位运算计算出索引位置，然后再去buckets数组中根据索引找到目标桶（bmap）</span><br></pre></td></tr></table></figure>
 
-
-<h4 id="写入数据"><a href="#写入数据" class="headerlink" title="写入数据"></a>写入数据</h4><h3 id="扩容"><a href="#扩容" class="headerlink" title="扩容"></a>扩容</h3><h4 id="规则"><a href="#规则" class="headerlink" title="规则"></a>规则</h4><h4 id="触发扩容条件"><a href="#触发扩容条件" class="headerlink" title="触发扩容条件"></a>触发扩容条件</h4><h3 id="非线程安全"><a href="#非线程安全" class="headerlink" title="非线程安全"></a>非线程安全</h3><h4 id="线程安全"><a href="#线程安全" class="headerlink" title="线程安全"></a>线程安全</h4><h3 id="解决非线程安全"><a href="#解决非线程安全" class="headerlink" title="解决非线程安全"></a>解决非线程安全</h3><h3 id="deep-copy"><a href="#deep-copy" class="headerlink" title="deep copy"></a>deep copy</h3><h3 id="Map注意事项"><a href="#Map注意事项" class="headerlink" title="Map注意事项"></a>Map注意事项</h3><ul>
+<ul>
+<li>第四步：hamp的个数count++（map）中的元素个数+1</li>
+</ul>
+<h3 id="扩容"><a href="#扩容" class="headerlink" title="扩容"></a>扩容</h3><h4 id="规则"><a href="#规则" class="headerlink" title="规则"></a>规则</h4><h4 id="触发扩容条件"><a href="#触发扩容条件" class="headerlink" title="触发扩容条件"></a>触发扩容条件</h4><h3 id="非线程安全"><a href="#非线程安全" class="headerlink" title="非线程安全"></a>非线程安全</h3><h4 id="线程安全"><a href="#线程安全" class="headerlink" title="线程安全"></a>线程安全</h4><h3 id="解决非线程安全"><a href="#解决非线程安全" class="headerlink" title="解决非线程安全"></a>解决非线程安全</h3><h3 id="deep-copy"><a href="#deep-copy" class="headerlink" title="deep copy"></a>deep copy</h3><h3 id="Map注意事项"><a href="#Map注意事项" class="headerlink" title="Map注意事项"></a>Map注意事项</h3><ul>
 <li>map无论有没有进行扩容，指向都是同一个地址。</li>
 </ul>
 <h3 id="题目思考"><a href="#题目思考" class="headerlink" title="题目思考"></a>题目思考</h3>
