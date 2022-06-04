@@ -11,7 +11,7 @@
   
   <title>
     
-      Category 
+      io.copy 
       
       
       |
@@ -134,19 +134,120 @@ MathJax = {
 
 
   
-  <!-- 分类页 url形式：https://yoursite/categories/ -->
-  <div class="container category-index">
-    <div>
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/golang/">golang</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/redis/">redis</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/network/">network</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%BE%AE%E6%9C%8D%E5%8A%A1/">微服务</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/">分库分表</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/">分布式事务</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mysql/">mysql</a><span class="category-list-count">1</span></li></ul>
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">io.copy</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-06-01 20:55:32
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags" title="Tags"></i>
+                
+                <span class="span--tag">
+                  <a href="/tags/golang/" title="golang">
+                    <b>#</b> golang
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h3 id="Net-x2F-http-下载"><a href="#Net-x2F-http-下载" class="headerlink" title="Net&#x2F;http 下载"></a>Net&#x2F;http 下载</h3><p>在golang中，若是要下载一个文件，最简单的就是先用http.get()方法建立一个远程的请求后，使用ioutil.WriteFile()等将请求内容直接写入文件中。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">func DownloadFile()&#123;</span><br><span class="line">	url :=&quot;https://junkewu.github.io/images/slice01.png&quot;</span><br><span class="line">	resp, err := http.Get(url)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		fmt.Fprint(os.Stdrr, &quot;get url error&quot;, url)</span><br><span class="line">	&#125;</span><br><span class="line">	 defer resp.Body.Close()</span><br><span class="line">	 </span><br><span class="line">	 data, err := ioutil.ReadAll(resp.Body)</span><br><span class="line">	 if err != nil &#123;</span><br><span class="line">	 		panic(err)</span><br><span class="line">	 &#125;</span><br><span class="line">	 </span><br><span class="line">	 _ = ioutil.WriteFile(&quot;temp/slice01.png&quot;, data, 0755)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这时候会发现一个问题，那就是下载小文件的时候是可以的，若是大文件的话，就可能会出现内存不足的问题，由于它是须要先把请求内容读到内存中，而后再写入文件的。</p>
+<p>如果需要下载大文件或者复制大文件，就应该用<strong>io.copy</strong>方法，它就是文件指针之间复制的，不用全读入内存。</p>
+<h3 id="io-copy"><a href="#io-copy" class="headerlink" title="io.copy"></a>io.copy</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">func Copy(dst Writer, src Reader) (written int64, err error) &#123;</span><br><span class="line">    return copyBuffer(dst, src, nil)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func copyBuffer(dst Writer, src Reader, buf []byte) (written int64, err error) &#123;</span><br><span class="line">    ....</span><br><span class="line">    if buf == nil &#123;</span><br><span class="line">        size := 32 * 1024</span><br><span class="line">        if l, ok := src.(*LimitedReader); ok &amp;&amp; int64(size) &gt; l.N &#123;</span><br><span class="line">            if l.N &lt; 1 &#123;</span><br><span class="line">                size = 1</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                size = int(l.N)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        buf = make([]byte, size)</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>它是将源文件复制到目标文件，而且是按默认的缓冲区32k循环操作的，不会将内容一次性全写入内存中，这样就能解决大文件的问题。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">func DownloadFile()&#123;</span><br><span class="line">	url := &quot;https://junkewu.gitlab.io/images/slice01.png&quot;</span><br><span class="line">	resp, err := http.Get(url)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		fmt.Fprint(os.Stderr, &quot;get url error&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line">	defer resp.Body.Close()</span><br><span class="line">	</span><br><span class="line">	newFile, err := os.Create(&quot;./temp/slice01.png&quot;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">	 	panic(err)</span><br><span class="line">	&#125;</span><br><span class="line">	wt := bufio.NewWriter(newFile)</span><br><span class="line">	defer newFile.Close()</span><br><span class="line">	</span><br><span class="line">	_, err := io.Copy(wt, resp.Body)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		panic(err)</span><br><span class="line">	&#125;</span><br><span class="line">	wt.Flush()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/../images/Snipaste_2022-06-02_10-58-44.png" alt="Snipaste_2022-06-02_10-58-44"></p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/05/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-06-01 20:55:32
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags" title="Tags"></i>
+                    
+                    <span class="span--tag">
+                      <a href="/tags/golang/" title="golang">
+                        <b>#</b> golang
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2022/06/04/mysql%E6%90%AD%E5%BB%BA%E4%B8%BB%E4%BB%8E%E6%9C%8D%E5%8A%A1%E5%99%A8/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Net-x2F-http-%E4%B8%8B%E8%BD%BD"><span class="toc-text">Net&#x2F;http 下载</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#io-copy"><span class="toc-text">io.copy</span></a></li></ol>
+      
     </div>
   </div>
-  
 
   
+<script src="/js/catalog.js"></script>
 
-  
 
-  
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
 
         
 <div class="footer">
@@ -413,12 +514,12 @@ MathJax = {
       </a>
       <div class="share-content hidden">
         
-          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + categories + '&url=' + http%3A%2F%2Fgithub.com%2Fcategories%2Findex.html + '" target="_blank" title="Twitter">
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + io.copy + '&url=' + http%3A%2F%2Fgithub.com%2F2022%2F06%2F01%2FGolang%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-io.copy%2F + '" target="_blank" title="Twitter">
             <i class="iconfont icon-twitter"></i>
           </a>
         
         
-          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/categories/index.html" target="_blank" title="Facebook">
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/2022/06/01/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-io.copy/" target="_blank" title="Facebook">
             <i class="iconfont icon-facebooksquare"></i>
           </a>
         

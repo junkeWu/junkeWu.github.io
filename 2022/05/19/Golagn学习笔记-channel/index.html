@@ -200,17 +200,46 @@ MathJax = {
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">ch1 := make(chan struct&#123;&#125;)</span><br><span class="line">ch2 := make(chan struct&#123;&#125;)</span><br><span class="line"></span><br><span class="line">// ch1, ch2 发送数据</span><br><span class="line">go sendCh1(ch1)</span><br><span class="line">go sendCh1(ch2)</span><br><span class="line"></span><br><span class="line">// channel 数据接受处理</span><br><span class="line">for &#123;</span><br><span class="line"> select &#123;</span><br><span class="line"> case &lt;-ch1:</span><br><span class="line">  doSomething1()</span><br><span class="line"> case &lt;-ch2:</span><br><span class="line">  doSomething2()</span><br><span class="line"> &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>select里是随机执行的。</p>
-<h3 id="channel-的-deadlock"><a href="#channel-的-deadlock" class="headerlink" title="channel 的 deadlock"></a><strong>channel 的 deadlock</strong></h3><h3 id="实现原理和特性"><a href="#实现原理和特性" class="headerlink" title="实现原理和特性"></a>实现原理和特性</h3><ul>
+<h3 id="channel-的-deadlock"><a href="#channel-的-deadlock" class="headerlink" title="channel 的 deadlock"></a><strong>channel 的 deadlock</strong></h3><p>前面提到过，往 channel 里读写数据时是有可能被阻塞住的，一旦被阻塞，则需要其他的 goroutine 执行对应的读写操作，才能解除阻塞状态。</p>
+<p>然而，阻塞后一直<strong>没能</strong>发生调度行为，没有可用的 goroutine 可执行，则会一直卡在这个地方，程序就失去执行意义了。此时 Go 就会报 deadlock 错误，如下代码：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">func main() &#123;</span><br><span class="line">  ch := make(chan int)</span><br><span class="line">  &lt;-ch</span><br><span class="line"></span><br><span class="line">  // 执行后将 panic：</span><br><span class="line">  // fatal error: all goroutines are asleep - deadlock!</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>因此，在使用 channel 时要注意 goroutine 的一发一取，避免 goroutine 永久阻塞！</p>
+<h3 id="实现原理和特性"><a href="#实现原理和特性" class="headerlink" title="实现原理和特性"></a>实现原理和特性</h3><ul>
 <li>全局锁</li>
 <li>移入\移出元素（移动拷贝）</li>
 </ul>
-<h3 id="底层结构hchan"><a href="#底层结构hchan" class="headerlink" title="底层结构hchan"></a>底层结构hchan</h3>
+<h3 id="底层结构hchan"><a href="#底层结构hchan" class="headerlink" title="底层结构hchan"></a>底层结构hchan</h3><p>channel 创建后返回了 <strong>hchan</strong> 结构体，现在我们来研究下这个结构体，它的主要字段如下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">type hchan struct &#123;</span><br><span class="line"> qcount   uint   // channel 里的元素计数</span><br><span class="line"> dataqsiz uint   // 可以缓冲的数量，如 ch := make(chan int, 10)。 此处的 10 即 dataqsiz</span><br><span class="line"> elemsize uint16 // 要发送或接收的数据类型大小</span><br><span class="line"> buf      unsafe.Pointer // 当 channel 设置了缓冲数量时，该 buf 指向一个存储缓冲数据的区域，该区域是一个循环队列的数据结构</span><br><span class="line"> closed   uint32 // 关闭状态</span><br><span class="line"> sendx    uint  // 当 channel 设置了缓冲数量时，数据区域即循环队列此时已发送数据的索引位置</span><br><span class="line"> recvx    uint  // 当 channel 设置了缓冲数量时，数据区域即循环队列此时已接收数据的索引位置</span><br><span class="line"> recvq    waitq // 想读取数据但又被阻塞住的 goroutine 队列</span><br><span class="line"> sendq    waitq // 想发送数据但又被阻塞住的 goroutine 队列</span><br><span class="line"></span><br><span class="line"> lock mutex</span><br><span class="line"> ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>channel 在进行读写数据时，会根据无缓冲、有缓冲设置进行对应的阻塞唤起动作，它们之间还是有区别的。下面我们来捋一下这些不同之处。</p>
+<h3 id="无缓冲-channel"><a href="#无缓冲-channel" class="headerlink" title="无缓冲 channel"></a><strong>无缓冲 channel</strong></h3><p>由于对 channel 的读写先后顺序不同，处理也会有所不同，所以，还得再进一步区分：</p>
+<h3 id="channel-先写再读"><a href="#channel-先写再读" class="headerlink" title="channel 先写再读"></a><strong>channel 先写再读</strong></h3><p>在这里，我们暂时认为有 2 个 goroutine 在使用 channel 通信，按先写再读的顺序，则具体流程如下：</p>
+<p><img src="/../images/Snipaste_2022-05-27_10-04-20.png" alt="Snipaste_2022-05-27_10-04-20"></p>
+<p>可以看到，由于 channel 是无缓冲的，所以 G1 暂时被挂在 sendq 队列里，然后 G1 调用了 gopark 休眠了起来。</p>
+<p>接着，又有 goroutine 来 channel 读取数据了：</p>
+<p><img src="/../images/Snipaste_2022-05-27_11-25-11.png" alt="Snipaste_2022-05-27_11-25-11"></p>
+<p>此时 G2 发现 sendq 等待队列里有 goroutine 存在，于是直接从 G1 copy 数据过来，并且会对 G1 设置 goready 函数，这样下次调度发生时， G1 就可以继续运行，并且会从等待队列里移除掉。</p>
+<h3 id="channel-先读再写"><a href="#channel-先读再写" class="headerlink" title="channel 先读再写"></a><strong>channel 先读再写</strong></h3><p>先读再写的流程跟上面一样。</p>
+<p><img src="/../images/Snipaste_2022-05-27_14-55-53.png" alt="Snipaste_2022-05-27_14-55-53"></p>
+<p>G1 暂时被挂在了 recvq 队列，然后休眠起来。</p>
+<p>G2 在写数据时，发现 recvq 队列有 goroutine 存在，于是直接将数据发送给 G1。同时设置 G1 goready 函数，等待下次调度运行。</p>
+<p><img src="/../images/Snipaste_2022-05-27_14-57-21.png" alt="Snipaste_2022-05-27_14-57-21"></p>
+<h3 id="有缓冲-channel"><a href="#有缓冲-channel" class="headerlink" title="有缓冲 channel"></a><strong>有缓冲 channel</strong></h3><p>在分析完了无缓冲 channel 的读写后，我们继续看看<strong>有缓冲 channel 的读写</strong>。同样的，我们分为 2 种情况：</p>
+<h3 id="channel-先写再读-1"><a href="#channel-先写再读-1" class="headerlink" title="channel 先写再读"></a><strong>channel 先写再读</strong></h3><p>这一次会优先判断缓冲数据区域是否已满，如果未满，则将数据保存在缓冲数据区域，即环形队列里。如果已满，则和之前的流程是一样的。</p>
+<p><img src="/../images/Snipaste_2022-05-27_14-58-37.png" alt="Snipaste_2022-05-27_14-58-37"></p>
+<p>当 G2 要读取数据时，会优先从缓冲数据区域去读取，并且在读取完后，会检查 sendq 队列，如果 goroutine 有等待队列，则会将它上面的 data 补充到缓冲数据区域，并且也对其设置 goready 函数。</p>
+<p><img src="/../images/Snipaste_2022-05-27_15-09-50.png" alt="Snipaste_2022-05-27_15-09-50"></p>
+<h3 id="channel-先读再写-1"><a href="#channel-先读再写-1" class="headerlink" title="channel 先读再写"></a><strong>channel 先读再写</strong></h3><p>此种情况和无缓冲的先读再写是一样流程，此处不再重复说明。</p>
+<p>有缓冲 channel 和无缓冲 channel 的读写基本相差不大，只是多了缓冲数据区域的判断而已。</p>
+<p>channel 在使用的时候大多时候得和 select 配合使用，尽管只需要简单的用 &lt;- ch 和 ch &lt;- 来读写数据，但它的底层还是很有讲究的，特别是涉及到调度的休眠唤起。</p>
+
       </div>
       
         <div class="prev-or-next">
           <div class="post-foot-next">
             
-              <a href="/2022/05/18/%E4%BB%80%E4%B9%88%E6%98%AF%E5%BE%AE%E6%9C%8D%E5%8A%A1%EF%BC%8C%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%94%A8%E5%BE%AE%E6%9C%8D%E5%8A%A1/" target="_self">
+              <a href="/2022/05/19/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-map/" target="_self">
                 <i class="iconfont icon-chevronleft"></i>
                 <span>Prev</span>
               </a>
@@ -236,7 +265,7 @@ MathJax = {
           </div>
           <div class="post-foot-prev">
             
-              <a href="/2022/05/19/Golagn%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-map/" target="_self">
+              <a href="/2022/05/24/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/" target="_self">
                 <span>Next</span>
                 <i class="iconfont icon-chevronright"></i>
               </a>
@@ -253,7 +282,7 @@ MathJax = {
     <div class="title">Contents</div>
     <div class="catalog-content">
       
-        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#channel-%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toc-text">channel 的概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#channel-%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="toc-text">channel 的使用</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#channel-%E7%9A%84%E5%88%9B%E5%BB%BA"><span class="toc-text">channel 的创建</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#channel-%E7%9A%84%E8%AF%BB%E5%86%99"><span class="toc-text">channel 的读写</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#channel-%E5%92%8C-select"><span class="toc-text">channel 和 select</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#channel-%E7%9A%84-deadlock"><span class="toc-text">channel 的 deadlock</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E5%92%8C%E7%89%B9%E6%80%A7"><span class="toc-text">实现原理和特性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84hchan"><span class="toc-text">底层结构hchan</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#channel-%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toc-text">channel 的概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#channel-%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="toc-text">channel 的使用</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#channel-%E7%9A%84%E5%88%9B%E5%BB%BA"><span class="toc-text">channel 的创建</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#channel-%E7%9A%84%E8%AF%BB%E5%86%99"><span class="toc-text">channel 的读写</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#channel-%E5%92%8C-select"><span class="toc-text">channel 和 select</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#channel-%E7%9A%84-deadlock"><span class="toc-text">channel 的 deadlock</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E5%92%8C%E7%89%B9%E6%80%A7"><span class="toc-text">实现原理和特性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84hchan"><span class="toc-text">底层结构hchan</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%A0%E7%BC%93%E5%86%B2-channel"><span class="toc-text">无缓冲 channel</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#channel-%E5%85%88%E5%86%99%E5%86%8D%E8%AF%BB"><span class="toc-text">channel 先写再读</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#channel-%E5%85%88%E8%AF%BB%E5%86%8D%E5%86%99"><span class="toc-text">channel 先读再写</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%89%E7%BC%93%E5%86%B2-channel"><span class="toc-text">有缓冲 channel</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#channel-%E5%85%88%E5%86%99%E5%86%8D%E8%AF%BB-1"><span class="toc-text">channel 先写再读</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#channel-%E5%85%88%E8%AF%BB%E5%86%8D%E5%86%99-1"><span class="toc-text">channel 先读再写</span></a></li></ol>
       
     </div>
   </div>
