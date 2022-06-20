@@ -218,7 +218,7 @@ MathJax = {
 <li>第一步：结合哈希因子和键name生产哈希值01101110001111110111011011</li>
 <li>第二步：获取哈希值的后B位，并根据后B位的值来决定将此键值对存放的那个桶中（bmap）。</li>
 </ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">将哈希值01101110001111110111011011和桶掩码（B个为1的二进制）进行&amp;运算，最终得到哈希值的后B位的值。假设当B为1时，其结果为0：</span><br><span class="line">哈希值：01101110001111110111011011</span><br><span class="line">桶掩码：00000000000000000000000001</span><br><span class="line">结果：  00000000000000000000000000 = 0</span><br><span class="line">找桶的原则实际上是根据后B位的位运算计算出索引位置，然后再去buckets数组中根据索引找到目标桶（bmap）。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">将哈希值01101110001111110111011011和桶掩码（B个为1的二进制）进行&amp;运算，最终得到哈希值的后B位的值。假设当B为1时，其结果为0：</span><br><span class="line">哈希值：01101110001111110111011011</span><br><span class="line">桶掩码：00000000000000000000000001</span><br><span class="line">结果：  00000000000000000000000001 = 1</span><br><span class="line">找桶的原则实际上是根据后B位的位运算计算出索引位置，然后再去buckets数组中根据索引找到目标桶（bmap）。</span><br></pre></td></tr></table></figure>
 
 <ul>
 <li>第四步：hamp的个数count++（map）中的元素个数+1</li>
