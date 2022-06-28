@@ -170,7 +170,7 @@ MathJax = {
 <li>Fanout:类似广播，转发到所有绑定交换机的Queue</li>
 <li>Direct:类似单播，RoutingKey和BindingKey完全匹配</li>
 <li>Topic:类似组播，转发到符合通配符匹配的Queue</li>
-<li>Headers:请求头与消息头匹配，才能接收消息了解微服务开发，了解分布式事务， 有项目开发经验;</li>
+<li>Headers:请求头与消息头匹配，才能接收消息.</li>
 </ul>
 <h4 id="常见工作模式"><a href="#常见工作模式" class="headerlink" title="常见工作模式"></a>常见工作模式</h4><h4 id="Fanout工作模式"><a href="#Fanout工作模式" class="headerlink" title="Fanout工作模式"></a>Fanout工作模式</h4><h3 id=""><a href="#" class="headerlink" title=""></a><img src="/../images/mq01.png" alt="mq01"></h3><p>c1和c2会是竞争关系，最后会有俩个消费者能消费到队列里的数据。</p>
 <h4 id="Direct工作模式"><a href="#Direct工作模式" class="headerlink" title="Direct工作模式"></a>Direct工作模式</h4><p><img src="/../images/mq03.png" alt="mq03"></p>
