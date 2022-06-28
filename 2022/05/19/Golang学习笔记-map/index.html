@@ -265,7 +265,7 @@ MathJax = {
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">旧桶个数为32个，翻倍后新桶的个数为64。</span><br><span class="line">在重新计算旧桶中的所有key哈希值时，红色位只能是0或1，所以桶中所有数据的后B位只能是以下俩种情况：</span><br><span class="line">	- 000111 [7], 意味着要迁移与旧桶编号一致的位置。</span><br><span class="line">	- 100111 [39], 意味着会迁移到翻倍后对应编号位置。</span><br><span class="line"></span><br><span class="line">特别提醒：同一个桶中ky的哈希值的低B位一定是相同的，不然不会放在同一个桶中，所以同一个桶中黄色标记的位都是相同的。</span><br></pre></td></tr></table></figure>
 
 <h4 id="等量扩容"><a href="#等量扩容" class="headerlink" title="等量扩容"></a>等量扩容</h4><p>如果是等量扩容（溢出桶太多引发的扩容），那么数据迁移机制就比较简单，就是讲旧桶（含溢出桶）中的值迁移到新桶中。这种扩容和迁移的意义在于：当溢出桶比较多而每个桶中的数据又不多时，可以用过等量扩容和迁移让数据更紧凑，从而减少溢出桶。</p>
-<h3 id="非线程安全"><a href="#非线程安全" class="headerlink" title="非线程安全"></a>非线程安全</h3><p>map默认是并发不安全的，同时对map进行并发读写时，程序会panic，原因如下：</p>
+<h3 id="非线程安全"><a href="#非线程安全" class="headerlink" title="非线程安全"></a>非线程安全</h3><p>map默认是并发不安全的，同时对map进行并发读写时(只能并发读，不能并发写)，程序会panic，原因如下：</p>
 <p>Go官方在经过长时间讨论后，认为Go Map更应适配典型使用场景（不需要从多个goroutine中进行安全访问），而不是为了小部分情况（并发访问），导致大部分程序付出加锁代价（性能）。</p>
 <h3 id="解决非线程安全"><a href="#解决非线程安全" class="headerlink" title="解决非线程安全"></a>解决非线程安全</h3><ul>
 <li>读写锁 sync.RWMutex</li>

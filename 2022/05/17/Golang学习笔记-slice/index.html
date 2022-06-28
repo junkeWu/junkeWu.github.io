@@ -186,7 +186,7 @@ MathJax = {
 <h4 id="二维定义"><a href="#二维定义" class="headerlink" title="二维定义"></a>二维定义</h4><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">res := <span class="built_in">make</span>([][]<span class="type">int</span>, <span class="number">4</span>)</span><br><span class="line"><span class="keyword">for</span> i := <span class="keyword">range</span> res &#123;</span><br><span class="line">   res[i] = <span class="built_in">make</span>([]<span class="type">int</span>, <span class="number">4</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>切片是可以跟nil值进行判断的，但是俩个切片不可以直接进行比较。</p>
-<h3 id="底层结构-x2F-原理"><a href="#底层结构-x2F-原理" class="headerlink" title="底层结构&#x2F;原理"></a>底层结构&#x2F;原理</h3><p><img src="/../images/slice01.png" alt="slice01"></p>
+<h3 id="底层结构-x2F-原理"><a href="#底层结构-x2F-原理" class="headerlink" title="底层结构&#x2F;原理"></a>底层结构&#x2F;原理</h3><p><img src="/../images/slice01.png"></p>
 <h3 id="扩容"><a href="#扩容" class="headerlink" title="扩容"></a>扩容</h3><h4 id="规则"><a href="#规则" class="headerlink" title="规则"></a>规则</h4><ul>
 <li>如果期望容量大于当前容量的两倍，则新分配的容量等于期望容量</li>
 <li>如果期望容量小于当前容量的两倍<ul>
