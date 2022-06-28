@@ -166,9 +166,28 @@ MathJax = {
         <p>无论是什么IO模型，都会走一套建立绑定监听的.</p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">fd3 = socket()</span><br><span class="line">bind(fd3,8080)</span><br><span class="line">listen(fd3)</span><br><span class="line">// 以上是所有模型都会走的一套逻辑</span><br><span class="line">accept(fd3, --》fd5 // blocking</span><br><span class="line">recv(fd5 --&gt;       // blocking</span><br></pre></td></tr></table></figure>
 
-<h3 id="BIO模型"><a href="#BIO模型" class="headerlink" title="BIO模型"></a>BIO模型</h3><p>BIO用clone的方式，用多线程的方式解决了单线程阻塞的问题，解决了建立socket，accpet这套逻辑会被单个线程阻塞住。</p>
+<h3 id="BIO模型"><a href="#BIO模型" class="headerlink" title="BIO模型"></a>BIO模型</h3><p>BIO用clone的方式，用多线程的方式解决了单线程阻塞的问题，解决了建立socket，accpet、revc这套逻辑会被单个线程阻塞住，把revc用多线程去处理，保障每个socket fd 都可以用单独的线程去处理。</p>
 <p><img src="/../images/io01.png" alt="io01"></p>
-<h3 id="NIO模型"><a href="#NIO模型" class="headerlink" title="NIO模型"></a>NIO模型</h3><h3 id="Select模型"><a href="#Select模型" class="headerlink" title="Select模型"></a>Select模型</h3><h3 id="Poll模型"><a href="#Poll模型" class="headerlink" title="Poll模型"></a>Poll模型</h3><h3 id="Epoll模型"><a href="#Epoll模型" class="headerlink" title="Epoll模型"></a>Epoll模型</h3>
+<p>但是BIO会特别慢，整体原因就是阻塞（要进行上下文切换）和clone操作。</p>
+<h3 id="NIO模型"><a href="#NIO模型" class="headerlink" title="NIO模型"></a>NIO模型</h3><p>NIO解决了阻塞的行为，可以用循环去处理，单个线程就可以解决连接建立，数据读取。那么就可以1- N个线程去处理，大大提高了速度。</p>
+<p><img src="/../images/io02.png" alt="io02"></p>
+<p>但是accept和recv都会发生系统调用，系统调用是会浪费系统资源的，包括中断、保存上下文、复制等。。</p>
+<p>并且每次循环，都会浪费没用的遍历查询看看有没有数据可以读取。（线程切换）</p>
+<p><img src="/../images/io03.png" alt="io03"></p>
+<h3 id="多路复用器"><a href="#多路复用器" class="headerlink" title="多路复用器"></a>多路复用器</h3><p>无论nio、select、poll都要遍历所有的IO，询问状态，只不过<br>NIO： 这个遍历的过程成本在用户态内核态切换</p>
+<p>Select、Poll：这个遍历的过程触发了一次系统调用，用户态内核态的切换过程中，把fds传递给内核，内核重新根据用户这个调用传过来的fds，遍历修改状态。</p>
+<p>select和poll的弊端就是每次都要重新重复传递fds，每次都要针对这个调用，都要触发一个遍历fds全量的复杂度。</p>
+<p>EPoll：</p>
+<p><img src="/../images/io04.png" alt="io04"></p>
+<h4 id="Select模型"><a href="#Select模型" class="headerlink" title="Select模型"></a>Select模型</h4><p><img src="/../images/io05.png" alt="io05"></p>
+<h4 id="Poll模型"><a href="#Poll模型" class="headerlink" title="Poll模型"></a>Poll模型</h4><p><img src="/../images/io06.png" alt="io06"></p>
+<p><img src="/../images/io07.png" alt="io07"></p>
+<h4 id="Epoll模型"><a href="#Epoll模型" class="headerlink" title="Epoll模型"></a>Epoll模型</h4><p><img src="/../images/io08.png" alt="io08"></p>
+<h3 id="同步、异步"><a href="#同步、异步" class="headerlink" title="同步、异步"></a>同步、异步</h3><ul>
+<li>同步：app自己read&#x2F;write。</li>
+<li>异步：kernel完成：R&#x2F;W,没有访问IO，buffer去操作。 win：iocp</li>
+</ul>
+
       </div>
       
         <div class="prev-or-next">
@@ -217,7 +236,7 @@ MathJax = {
     <div class="title">Contents</div>
     <div class="catalog-content">
       
-        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#BIO%E6%A8%A1%E5%9E%8B"><span class="toc-text">BIO模型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#NIO%E6%A8%A1%E5%9E%8B"><span class="toc-text">NIO模型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Select%E6%A8%A1%E5%9E%8B"><span class="toc-text">Select模型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Poll%E6%A8%A1%E5%9E%8B"><span class="toc-text">Poll模型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Epoll%E6%A8%A1%E5%9E%8B"><span class="toc-text">Epoll模型</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#BIO%E6%A8%A1%E5%9E%8B"><span class="toc-text">BIO模型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#NIO%E6%A8%A1%E5%9E%8B"><span class="toc-text">NIO模型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8%E5%99%A8"><span class="toc-text">多路复用器</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Select%E6%A8%A1%E5%9E%8B"><span class="toc-text">Select模型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Poll%E6%A8%A1%E5%9E%8B"><span class="toc-text">Poll模型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Epoll%E6%A8%A1%E5%9E%8B"><span class="toc-text">Epoll模型</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%8C%E6%AD%A5%E3%80%81%E5%BC%82%E6%AD%A5"><span class="toc-text">同步、异步</span></a></li></ol>
       
     </div>
   </div>
