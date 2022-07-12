@@ -244,6 +244,87 @@ MathJax = {
 <li>通过websocket推送</li>
 <li>用户b上线的时候，通过pull从mongodb中拉取离线消息（成功后会从mongodb中删除）。</li>
 </ul>
+<h4 id="消息可达性（可靠性）设计"><a href="#消息可达性（可靠性）设计" class="headerlink" title="消息可达性（可靠性）设计"></a>消息可达性（可靠性）设计</h4><p><strong>定义</strong></p>
+<p>IM消息系统的可靠性，通常就是指消息投递的可靠性，即我们经常听到的“消息必达”，通常用消息的不丢失和不重复两个技术指标来表示。确保消息被发送后，能被接收者收到。由于网络环境的复杂性，以及用户在线的不确定性，消息的可靠性（不丢失、不重复）无疑是IM系统的核心指标，也是IM系统实现中的难点之一。总体来说，IM系统的消息“可靠性”，通常就是指聊天消息投递的可靠性（准确的说，这个“消息”是广义的，因为还存用户看不见的各种指令和通知，包括但不限于进群退群通知、好友添加通知等，为了方便描述，统称“消息”）。</p>
+<p>（1）发送失败，对于这种情况IM系统必须要感知到，明确反馈发送方。如果此消息没有发送成功，发送方可以选择重试或者稍后再试。</p>
+<p>（2）发送成功，如果接收方处在“在线”状态，应该立即收到此消息。如果接收方处在“离线”状态不能收到消息，一旦上线则立刻收到消息。</p>
+<p>（3）消息不能重复，用数学术语表示：“有且仅有这条消息”，如果重复了，可能表达的意思就变了。 总之，一个商用 IM系统，必须包含消息“可靠性”逻辑，才能谈基本可用，这是IM系统最基本也是最核心的逻辑。</p>
+<p><strong>具体设计方案</strong></p>
+<ul>
+<li><p>ack确认机制，服务器是否接收到消息会回馈客户端</p>
+</li>
+<li><p>seq对齐和同步机制（具体流程参考上面消息架构介绍和正确解读消息分发流程）</p>
+</li>
+</ul>
+<h4 id="性能考量"><a href="#性能考量" class="headerlink" title="性能考量"></a>性能考量</h4><p>Open-IM-Server官网有详细的性能测试和总结</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://doc.rentsoft.cn/#/test_report/accuracy">https://doc.rentsoft.cn/#/test_report/accuracy</a></li>
+<li>结合他们总结的点，我们应该在生产中注意几个问题<ul>
+<li>mongodb写入操作，1条消息，需要按照发送者和接收者拆分2次，mongodb写入2次，可以针对mongodb读写进一步优化。</li>
+<li>所有中间件几乎都是单机部署，可考虑多机部署，增加中间件的高可用</li>
+</ul>
+</li>
+</ul>
+<h4 id="文件传输-支持预览"><a href="#文件传输-支持预览" class="headerlink" title="文件传输 支持预览"></a>文件传输 支持预览</h4><p><strong>上传</strong></p>
+<ul>
+<li><p>阿里云oss ：client发送图片给另一个client，先请求获取oss上传私钥等参数，再直接上传oss。</p>
+</li>
+<li><p>腾讯云cos：client发送图片给另一个client，先请求获取oss上传私钥等参数，再直接上传cos。</p>
+</li>
+<li><p>minio：调用后端服务上传。</p>
+</li>
+</ul>
+<p><strong>下载</strong></p>
+<ul>
+<li>调用oss、cos或者minio进行会话中预览。</li>
+<li>客户端调用下载接口直接调用oss、cos或者minio下载接口进行下载。</li>
+</ul>
+<h4 id="在线状态相关设计及多端登录的状态维护"><a href="#在线状态相关设计及多端登录的状态维护" class="headerlink" title="在线状态相关设计及多端登录的状态维护"></a>在线状态相关设计及多端登录的状态维护</h4><p>后台运行状态（PushOnline）只有手机端（Android、iOS、iPad）会存在，PC、Mac、Linux、小程序和 Web 端不存在该种状态。</p>
+<h5 id="前台运行状态（Online）"><a href="#前台运行状态（Online）" class="headerlink" title="前台运行状态（Online）"></a>前台运行状态（Online）</h5><p>前台运行状态（Online），是指客户端和即时通信 IM 服务端保持有顺畅的 TCP 网络连接，客户端可以发消息给即时通信 IM 服务端，也可以收到来自即时通信 IM 服务端推送的消息。</p>
+<p>当用户打开 App 后，状态即为前台运行状态（Online）。</p>
+<p>App 启动后，客户端和即时通信 IM 服务端建立 TCP 长连接，即时通信 IM 服务端保存客户端的在线信息，例如客户端的网络链路信息，客户端的平台版本等。App 在运行过程中，IM SDK 每隔一段时间发一个心跳包给服务器，以确认用户的在线状态。</p>
+<h5 id="后台运行状态（PushOnline）"><a href="#后台运行状态（PushOnline）" class="headerlink" title="后台运行状态（PushOnline）"></a>后台运行状态（PushOnline）</h5><p><strong>特殊情况</strong></p>
+<ul>
+<li>安卓默认为自动管理模式，也就是默认没有设置后台保活,但是没有kill掉进程，任然能收到信息。</li>
+</ul>
+<p>后台运行状态（PushOnline），是指客户端和即时通信 IM 服务端的 TCP 长连接断开。此时可收到消息的离线推送。<br>以下场景用户的状态为后台运行状态（PushOnline）：</p>
+<ul>
+<li>用户使用完 App ，把 App 切后台后进程被手机操作系统 kill 掉，或者用户主动 kill 掉 App 进程。<br>如果 App 在手机操作系统的保活白名单中，用户把 App 切后台，进程并不会被手机操作系统 kill 掉。此时状态仍然为前台运行状态（Online）。前台运行状态（Online）和后台运行状态（PushOnline）判断的标准之一是 App 进程是否被 kill ，即客户端和即时通信 IM 服务端的 TCP 长连接是否断开。</li>
+<li>用户主动关闭客户端网络（例如打开手机飞行模式），或者客户端网络完全不可用（例如进入完全没有网络信号的隧道）。<br>在这种特殊情况下，客户端连 TCP 协议的 FIN 包或 RST 包都无法发出，即时通信 IM 服务端需要等待 400 秒后发现心跳包超时，状态才会变成后台运行状态（PushOnline）。</li>
+</ul>
+<h5 id="未登录状态（Offline）"><a href="#未登录状态（Offline）" class="headerlink" title="未登录状态（Offline）"></a>未登录状态（Offline）</h5><p>未登录状态（Offline），是指用户没有输入帐号和密码登录前的状态，此时无法收到消息的在线推送，也无法收到消息的离线推送。<br>以下场景用户的状态为未登录状态（Offline）：</p>
+<ul>
+<li>用户主动登出，或下载 App 后还未进行过登录时。</li>
+<li>用户状态变成后台运行状态（PushOnline）后，7天内没有再登录过，此时状态变为未登录状态（Offline）。</li>
+</ul>
+<h5 id="查询用户在线状态"><a href="#查询用户在线状态" class="headerlink" title="查询用户在线状态"></a>查询用户在线状态</h5><p>客户端可以通过调用服务端api获取在线状态 <strong>user&#x2F;get_users_online_status</strong></p>
+<h5 id="状态变更感知的实时性"><a href="#状态变更感知的实时性" class="headerlink" title="状态变更感知的实时性"></a>状态变更感知的实时性</h5><p><strong>Android&#x2F;iOS&#x2F;iPad&#x2F;PC&#x2F;Mac&#x2F;Linux</strong></p>
+<p>对于绝大多数情况，用户状态的变化都能实时感知，例如：</p>
+<ul>
+<li>用户主动登录，状态变成前台运行状态（Online）。</li>
+<li>用户主动登出, 状态变成未登录状态（Offline）。</li>
+<li>用户主动 kill 客户端进程，或者用户切后台后，客户端进程被手机操作系统 kill 掉，状态变成后台运行状态（PushOnline）。</li>
+</ul>
+<p>只有以下一种特殊情况，IM 服务器需要等待一段时间的心跳超时时间才能感知状态变更：<br>当网络完全不可用时，客户端连 TCP 协议层的 FIN 包或 RST 包都无法发出时，IM 服务器需要等待一段时间的心跳超时时间才能感知到状态变成后台运行状态（PushOnline）。常见的场景有用户主动关闭客户端的网络（例如开启手机的飞行模式），或者进入完全没有网络信号的隧道。</p>
+<h6 id="Web"><a href="#Web" class="headerlink" title="Web"></a>Web</h6><p>用户主动登录 Web 端时，IM 服务器可以实时感知到状态变成前台运行状态（Online）。</p>
+<p>各种场景的退出&#x2F;断线的状态变更实时性如下：</p>
+<ul>
+<li>直接关闭页面，可以实时感知，状态变成未登录状态（Offline）。</li>
+<li>页面不关闭时，网络断开，需要一段时间才能感知到，状态变成未登录状态（Offline）。</li>
+<li>主动调用 destroy 接口，可以实时感知，变成未登录状态（Offline）。</li>
+</ul>
+<h6 id="小程序"><a href="#小程序" class="headerlink" title="小程序"></a>小程序</h6><p>用户主动登录小程序端时，IM 服务器可以实时感知到状态变成前台运行状态（Online）。</p>
+<p>各种场景的退出&#x2F;断线的状态变更实时性如下：</p>
+<ul>
+<li>点右上角退出，几秒内感知到状态变成未登录状态（Offline）。</li>
+<li>断网(如手机开启飞行模式) ，60s左右 感知到状态变成未登录状态（Offline）。</li>
+<li>微信切后台，30s 左右状态变成未登录状态（Offline）。</li>
+<li>杀掉微信进程，可以实时感知，变成未登录状态（Offline）。</li>
+<li>主动调用 destroy 接口，可以实时感知，变成未登录状态（Offline）</li>
+</ul>
+<h5 id="多端登录"><a href="#多端登录" class="headerlink" title="多端登录"></a>多端登录</h5><p><strong>互踢</strong></p>
+<p>默认情况，IM SDK 在同时登录多个终端（如同时登录 PC、Android）时，会进行互踢，只有最后一个登录的设备可以在线，之前登录的都会被踢下线。</p>
+<p><strong>双平台登录：Android、iOS、Windows、Mac 每种平台只能一个在线，web端可以多个同时在线</strong></p>
 
       </div>
       
@@ -288,7 +369,7 @@ MathJax = {
     <div class="title">Contents</div>
     <div class="catalog-content">
       
-        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E7%BA%A7%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84%E8%A7%A3%E6%9E%90"><span class="toc-text">一级目录结构解析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E5%90%AF%E5%8A%A8"><span class="toc-text">本地启动</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AE%BE%E8%AE%A1%E8%A1%A8"><span class="toc-text">获取数据库设计表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IM%E6%95%B4%E4%BD%93%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84"><span class="toc-text">IM整体系统架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E6%9E%B6%E6%9E%84"><span class="toc-text">消息架构</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90"><span class="toc-text">流程分析</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%94%99%E8%AF%AF%E8%A7%A3%E8%AF%BB%E6%B5%81%E7%A8%8B"><span class="toc-text">错误解读流程</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%AD%A3%E7%A1%AE%E8%A7%A3%E8%AF%BB%E6%B5%81%E7%A8%8B"><span class="toc-text">正确解读流程</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%97%B6%E5%BA%8F%E5%9B%BE%E6%80%BB%E7%BB%93%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E6%B5%81%E7%A8%8B"><span class="toc-text">时序图总结消息发送流程</span></a></li></ol></li></ol></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E7%BA%A7%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84%E8%A7%A3%E6%9E%90"><span class="toc-text">一级目录结构解析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E5%90%AF%E5%8A%A8"><span class="toc-text">本地启动</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AE%BE%E8%AE%A1%E8%A1%A8"><span class="toc-text">获取数据库设计表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IM%E6%95%B4%E4%BD%93%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84"><span class="toc-text">IM整体系统架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E6%9E%B6%E6%9E%84"><span class="toc-text">消息架构</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90"><span class="toc-text">流程分析</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%94%99%E8%AF%AF%E8%A7%A3%E8%AF%BB%E6%B5%81%E7%A8%8B"><span class="toc-text">错误解读流程</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%AD%A3%E7%A1%AE%E8%A7%A3%E8%AF%BB%E6%B5%81%E7%A8%8B"><span class="toc-text">正确解读流程</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%97%B6%E5%BA%8F%E5%9B%BE%E6%80%BB%E7%BB%93%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E6%B5%81%E7%A8%8B"><span class="toc-text">时序图总结消息发送流程</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E5%8F%AF%E8%BE%BE%E6%80%A7%EF%BC%88%E5%8F%AF%E9%9D%A0%E6%80%A7%EF%BC%89%E8%AE%BE%E8%AE%A1"><span class="toc-text">消息可达性（可靠性）设计</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E8%80%83%E9%87%8F"><span class="toc-text">性能考量</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E4%BC%A0%E8%BE%93-%E6%94%AF%E6%8C%81%E9%A2%84%E8%A7%88"><span class="toc-text">文件传输 支持预览</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%A8%E7%BA%BF%E7%8A%B6%E6%80%81%E7%9B%B8%E5%85%B3%E8%AE%BE%E8%AE%A1%E5%8F%8A%E5%A4%9A%E7%AB%AF%E7%99%BB%E5%BD%95%E7%9A%84%E7%8A%B6%E6%80%81%E7%BB%B4%E6%8A%A4"><span class="toc-text">在线状态相关设计及多端登录的状态维护</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%89%8D%E5%8F%B0%E8%BF%90%E8%A1%8C%E7%8A%B6%E6%80%81%EF%BC%88Online%EF%BC%89"><span class="toc-text">前台运行状态（Online）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%90%8E%E5%8F%B0%E8%BF%90%E8%A1%8C%E7%8A%B6%E6%80%81%EF%BC%88PushOnline%EF%BC%89"><span class="toc-text">后台运行状态（PushOnline）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%9C%AA%E7%99%BB%E5%BD%95%E7%8A%B6%E6%80%81%EF%BC%88Offline%EF%BC%89"><span class="toc-text">未登录状态（Offline）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%9F%A5%E8%AF%A2%E7%94%A8%E6%88%B7%E5%9C%A8%E7%BA%BF%E7%8A%B6%E6%80%81"><span class="toc-text">查询用户在线状态</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E5%8F%98%E6%9B%B4%E6%84%9F%E7%9F%A5%E7%9A%84%E5%AE%9E%E6%97%B6%E6%80%A7"><span class="toc-text">状态变更感知的实时性</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#Web"><span class="toc-text">Web</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%8F%E7%A8%8B%E5%BA%8F"><span class="toc-text">小程序</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%A4%9A%E7%AB%AF%E7%99%BB%E5%BD%95"><span class="toc-text">多端登录</span></a></li></ol></li></ol></li></ol>
       
     </div>
   </div>
