@@ -258,14 +258,16 @@ MathJax = {
 </ul>
 <h4 id="性能考量"><a href="#性能考量" class="headerlink" title="性能考量"></a>性能考量</h4><p>Open-IM-Server官网有详细的性能测试和总结</p>
 <ul>
-<li><a target="_blank" rel="noopener" href="https://doc.rentsoft.cn/#/test_report/accuracy">https://doc.rentsoft.cn/#/test_report/accuracy</a></li>
-<li>结合他们总结的点，我们应该在生产中注意几个问题<ul>
+<li><p><a target="_blank" rel="noopener" href="https://doc.rentsoft.cn/#/test_report/accuracy">https://doc.rentsoft.cn/#/test_report/accuracy</a></p>
+</li>
+<li><p>结合他们总结的点，我们应该在生产中注意几个问题</p>
+<ul>
 <li>mongodb写入操作，1条消息，需要按照发送者和接收者拆分2次，mongodb写入2次，可以针对mongodb读写进一步优化。</li>
 <li>所有中间件几乎都是单机部署，可考虑多机部署，增加中间件的高可用</li>
 </ul>
-</li>
+<h4 id="文件传输-支持预览"><a href="#文件传输-支持预览" class="headerlink" title="文件传输 支持预览"></a>文件传输 支持预览</h4></li>
 </ul>
-<h4 id="文件传输-支持预览"><a href="#文件传输-支持预览" class="headerlink" title="文件传输 支持预览"></a>文件传输 支持预览</h4><p><strong>上传</strong></p>
+<p><strong>上传</strong></p>
 <ul>
 <li><p>阿里云oss ：client发送图片给另一个client，先请求获取oss上传私钥等参数，再直接上传oss。</p>
 </li>
@@ -325,6 +327,162 @@ MathJax = {
 <h5 id="多端登录"><a href="#多端登录" class="headerlink" title="多端登录"></a>多端登录</h5><p><strong>互踢</strong></p>
 <p>默认情况，IM SDK 在同时登录多个终端（如同时登录 PC、Android）时，会进行互踢，只有最后一个登录的设备可以在线，之前登录的都会被踢下线。</p>
 <p><strong>双平台登录：Android、iOS、Windows、Mac 每种平台只能一个在线，web端可以多个同时在线</strong></p>
+<h3 id="服务模块详细介绍"><a href="#服务模块详细介绍" class="headerlink" title="服务模块详细介绍"></a>服务模块详细介绍</h3><h4 id="对外api接口"><a href="#对外api接口" class="headerlink" title="对外api接口"></a>对外api接口</h4><h5 id="open-im-msg-gateway"><a href="#open-im-msg-gateway" class="headerlink" title="open_im_msg_gateway"></a>open_im_msg_gateway</h5><ul>
+<li><p>端口：10001</p>
+</li>
+<li><p>提供接口相关功能：ws协议，消息端口，比如消息发送，推送等</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;open_im_msg_gateway&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-api"><a href="#open-im-api" class="headerlink" title="open_im_api"></a>open_im_api</h5><ul>
+<li><p>端口：10002</p>
+</li>
+<li><p>提供接口相关功能：用户、好友、群组、权限获取、第三方服务、组织结构等接口</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;open_im_api&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-sdk-server"><a href="#open-im-sdk-server" class="headerlink" title="open_im_sdk_server"></a>open_im_sdk_server</h5><ul>
+<li><p>端口：10003</p>
+</li>
+<li><p>提供接口相关功能：ws协议，针对jssdk的专用端口</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;Open-IM-SDK-Core&#x2F;ws_wrapper&#x2F;cmd&#x2F;open_im_sdk_server.go</p>
+</li>
+</ul>
+<h5 id="open-im-demo"><a href="#open-im-demo" class="headerlink" title="open_im_demo"></a>open_im_demo</h5><ul>
+<li><p>端口：10004</p>
+</li>
+<li><p>提供接口相关功能：demo使用的用户注册登录端口</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;open_im_demo&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-cms-api"><a href="#open-im-cms-api" class="headerlink" title="open_im_cms_api"></a>open_im_cms_api</h5><ul>
+<li><p>端口：10006</p>
+</li>
+<li><p>提供接口相关功能：管理后台api端口</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;open_im_cms_api&#x2F;main.go</p>
+</li>
+</ul>
+<h4 id="内部服务rpc接口"><a href="#内部服务rpc接口" class="headerlink" title="内部服务rpc接口"></a>内部服务rpc接口</h4><h5 id="open-im-user"><a href="#open-im-user" class="headerlink" title="open_im_user"></a>open_im_user</h5><ul>
+<li><p>端口：10110</p>
+</li>
+<li><p>提供接口相关功能：获取用户信息、批量设置对话、获取所有会话、获取单个会话、设置单个会话、账号检查等功能</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;rpc&#x2F;open_im_user&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-friend"><a href="#open-im-friend" class="headerlink" title="open_im_friend"></a>open_im_friend</h5><ul>
+<li><p>端口：10120</p>
+</li>
+<li><p>提供接口相关功能：添加黑名单、添加朋友、导入朋友、添加好友回复、删除好友、获取黑名单列表、设置好友标识、移出黑名单功能</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;rpc&#x2F;open_im_friend&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-msg"><a href="#open-im-msg" class="headerlink" title="open_im_msg"></a>open_im_msg</h5><ul>
+<li><p>端口：10130</p>
+</li>
+<li><p>提供接口相关功能：聊天消息生产等功能</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;rpc&#x2F;open_im_msg&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-msg-gateway-1"><a href="#open-im-msg-gateway-1" class="headerlink" title="open_im_msg_gateway"></a>open_im_msg_gateway</h5><ul>
+<li><p>端口：10140</p>
+</li>
+<li><p>提供接口相关功能：在线推送、获取在线用户状态、大群在线批量推送消息、在线批量推送消息、解码ws数据、登出等功能</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;open_im_msg_gateway&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-group"><a href="#open-im-group" class="headerlink" title="open_im_group"></a>open_im_group</h5><ul>
+<li><p>端口：10140</p>
+</li>
+<li><p>提供接口相关功能：创建群聊、获得群聊列表、邀请用户加入群聊、获取群聊所有用户成员、获取群聊用户等级、提出群聊、获取群聊用户个人信息、获取群聊申请列表、允许申请进入群聊等功能</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;rpc&#x2F;open_im_group&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-auth"><a href="#open-im-auth" class="headerlink" title="open_im_auth"></a>open_im_auth</h5><ul>
+<li><p>端口：10150</p>
+</li>
+<li><p>提供接口相关功能：用户注册、用户token、强制注销、强制下线、等功能</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;rpc&#x2F;open_im_auth&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-msg-transfer"><a href="#open-im-msg-transfer" class="headerlink" title="open_im_msg_transfer"></a>open_im_msg_transfer</h5><ul>
+<li>提供接口相关功能:  设置kafka Topic、获取Topic、注册订阅等功能</li>
+<li>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;open_im_msg_transfer&#x2F;main.go</li>
+</ul>
+<h5 id="open-im-push"><a href="#open-im-push" class="headerlink" title="open_im_push"></a>open_im_push</h5><ul>
+<li><p>端口：10170</p>
+</li>
+<li><p>提供接口相关功能: 推送消息等功能</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;open_im_push&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-statistics"><a href="#open-im-statistics" class="headerlink" title="open_im_statistics"></a>open_im_statistics</h5><ul>
+<li><p>端口：10180</p>
+</li>
+<li><p>提供接口相关功能: 获取活跃群聊、获取活跃用户、获取组统计信息、获取消息统计信息、获取用户统计信息等功能</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;rpc&#x2F;open_im_statistics&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-message-cms"><a href="#open-im-message-cms" class="headerlink" title="open_im_message_cms"></a>open_im_message_cms</h5><ul>
+<li><p>端口：10190</p>
+</li>
+<li><p>提供接口相关功能:  广播消息、获取历史消息、批量发送消息、撤回消息等功能</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;rpc&#x2F;open_im_message_cms&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-admin-cms"><a href="#open-im-admin-cms" class="headerlink" title="open_im_admin_cms"></a>open_im_admin_cms</h5><ul>
+<li><p>端口：10200</p>
+</li>
+<li><p>提供接口相关功能:  管理员登录等功能</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;rpc&#x2F;open_im_admin_cms&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-office"><a href="#open-im-office" class="headerlink" title="open_im_office"></a>open_im_office</h5><ul>
+<li><p>端口：10210</p>
+</li>
+<li><p>提供接口相关功能: 启动发送标记消息协程、获得用户标签、创建标签、删除标签、设置标签、获取标记发送日志、创建一条朋友圈、删除朋友圈、获取权限用户ID列表、点赞一条朋友圈、评论朋友圈等功能</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;rpc&#x2F;open_im_office&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-organization"><a href="#open-im-organization" class="headerlink" title="open_im_organization"></a>open_im_organization</h5><ul>
+<li><p>端口：10220</p>
+</li>
+<li><p>提供接口相关功能:  创建部门、更新部门信息、获取子部门信息、删除部门、增加部门成员、更改部门成员、获取上级部门列表等功能</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;rpc&#x2F;open_im_organization&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-conversation"><a href="#open-im-conversation" class="headerlink" title="open_im_conversation"></a>open_im_conversation</h5><ul>
+<li><p>端口：10230</p>
+</li>
+<li><p>提供接口相关功能:  修改对话字段、等功能</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;rpc&#x2F;open_im_conversation&#x2F;main.go</p>
+</li>
+</ul>
+<h5 id="open-im-cache"><a href="#open-im-cache" class="headerlink" title="open_im_cache"></a>open_im_cache</h5><ul>
+<li><p>端口：10240</p>
+</li>
+<li><p>提供接口相关功能: 从缓存中获取用户信息、更新缓存中的用户信息、从缓存中获取朋友id列表、添加朋友到缓存、从缓存中减少好友、从缓存中获取黑名单ID列表等功能</p>
+</li>
+<li><p>主函数入口路径：Open-IM-Server&#x2F;cmd&#x2F;rpc&#x2F;open_im_cache&#x2F;main.go</p>
+</li>
+</ul>
 
       </div>
       
@@ -369,7 +527,7 @@ MathJax = {
     <div class="title">Contents</div>
     <div class="catalog-content">
       
-        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E7%BA%A7%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84%E8%A7%A3%E6%9E%90"><span class="toc-text">一级目录结构解析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E5%90%AF%E5%8A%A8"><span class="toc-text">本地启动</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AE%BE%E8%AE%A1%E8%A1%A8"><span class="toc-text">获取数据库设计表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IM%E6%95%B4%E4%BD%93%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84"><span class="toc-text">IM整体系统架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E6%9E%B6%E6%9E%84"><span class="toc-text">消息架构</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90"><span class="toc-text">流程分析</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%94%99%E8%AF%AF%E8%A7%A3%E8%AF%BB%E6%B5%81%E7%A8%8B"><span class="toc-text">错误解读流程</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%AD%A3%E7%A1%AE%E8%A7%A3%E8%AF%BB%E6%B5%81%E7%A8%8B"><span class="toc-text">正确解读流程</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%97%B6%E5%BA%8F%E5%9B%BE%E6%80%BB%E7%BB%93%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E6%B5%81%E7%A8%8B"><span class="toc-text">时序图总结消息发送流程</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E5%8F%AF%E8%BE%BE%E6%80%A7%EF%BC%88%E5%8F%AF%E9%9D%A0%E6%80%A7%EF%BC%89%E8%AE%BE%E8%AE%A1"><span class="toc-text">消息可达性（可靠性）设计</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E8%80%83%E9%87%8F"><span class="toc-text">性能考量</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E4%BC%A0%E8%BE%93-%E6%94%AF%E6%8C%81%E9%A2%84%E8%A7%88"><span class="toc-text">文件传输 支持预览</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%A8%E7%BA%BF%E7%8A%B6%E6%80%81%E7%9B%B8%E5%85%B3%E8%AE%BE%E8%AE%A1%E5%8F%8A%E5%A4%9A%E7%AB%AF%E7%99%BB%E5%BD%95%E7%9A%84%E7%8A%B6%E6%80%81%E7%BB%B4%E6%8A%A4"><span class="toc-text">在线状态相关设计及多端登录的状态维护</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%89%8D%E5%8F%B0%E8%BF%90%E8%A1%8C%E7%8A%B6%E6%80%81%EF%BC%88Online%EF%BC%89"><span class="toc-text">前台运行状态（Online）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%90%8E%E5%8F%B0%E8%BF%90%E8%A1%8C%E7%8A%B6%E6%80%81%EF%BC%88PushOnline%EF%BC%89"><span class="toc-text">后台运行状态（PushOnline）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%9C%AA%E7%99%BB%E5%BD%95%E7%8A%B6%E6%80%81%EF%BC%88Offline%EF%BC%89"><span class="toc-text">未登录状态（Offline）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%9F%A5%E8%AF%A2%E7%94%A8%E6%88%B7%E5%9C%A8%E7%BA%BF%E7%8A%B6%E6%80%81"><span class="toc-text">查询用户在线状态</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E5%8F%98%E6%9B%B4%E6%84%9F%E7%9F%A5%E7%9A%84%E5%AE%9E%E6%97%B6%E6%80%A7"><span class="toc-text">状态变更感知的实时性</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#Web"><span class="toc-text">Web</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%8F%E7%A8%8B%E5%BA%8F"><span class="toc-text">小程序</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%A4%9A%E7%AB%AF%E7%99%BB%E5%BD%95"><span class="toc-text">多端登录</span></a></li></ol></li></ol></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E7%BA%A7%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84%E8%A7%A3%E6%9E%90"><span class="toc-text">一级目录结构解析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E5%90%AF%E5%8A%A8"><span class="toc-text">本地启动</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AE%BE%E8%AE%A1%E8%A1%A8"><span class="toc-text">获取数据库设计表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IM%E6%95%B4%E4%BD%93%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84"><span class="toc-text">IM整体系统架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E6%9E%B6%E6%9E%84"><span class="toc-text">消息架构</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90"><span class="toc-text">流程分析</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%94%99%E8%AF%AF%E8%A7%A3%E8%AF%BB%E6%B5%81%E7%A8%8B"><span class="toc-text">错误解读流程</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%AD%A3%E7%A1%AE%E8%A7%A3%E8%AF%BB%E6%B5%81%E7%A8%8B"><span class="toc-text">正确解读流程</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%97%B6%E5%BA%8F%E5%9B%BE%E6%80%BB%E7%BB%93%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81%E6%B5%81%E7%A8%8B"><span class="toc-text">时序图总结消息发送流程</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E5%8F%AF%E8%BE%BE%E6%80%A7%EF%BC%88%E5%8F%AF%E9%9D%A0%E6%80%A7%EF%BC%89%E8%AE%BE%E8%AE%A1"><span class="toc-text">消息可达性（可靠性）设计</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E8%80%83%E9%87%8F"><span class="toc-text">性能考量</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E4%BC%A0%E8%BE%93-%E6%94%AF%E6%8C%81%E9%A2%84%E8%A7%88"><span class="toc-text">文件传输 支持预览</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%A8%E7%BA%BF%E7%8A%B6%E6%80%81%E7%9B%B8%E5%85%B3%E8%AE%BE%E8%AE%A1%E5%8F%8A%E5%A4%9A%E7%AB%AF%E7%99%BB%E5%BD%95%E7%9A%84%E7%8A%B6%E6%80%81%E7%BB%B4%E6%8A%A4"><span class="toc-text">在线状态相关设计及多端登录的状态维护</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%89%8D%E5%8F%B0%E8%BF%90%E8%A1%8C%E7%8A%B6%E6%80%81%EF%BC%88Online%EF%BC%89"><span class="toc-text">前台运行状态（Online）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%90%8E%E5%8F%B0%E8%BF%90%E8%A1%8C%E7%8A%B6%E6%80%81%EF%BC%88PushOnline%EF%BC%89"><span class="toc-text">后台运行状态（PushOnline）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%9C%AA%E7%99%BB%E5%BD%95%E7%8A%B6%E6%80%81%EF%BC%88Offline%EF%BC%89"><span class="toc-text">未登录状态（Offline）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%9F%A5%E8%AF%A2%E7%94%A8%E6%88%B7%E5%9C%A8%E7%BA%BF%E7%8A%B6%E6%80%81"><span class="toc-text">查询用户在线状态</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E5%8F%98%E6%9B%B4%E6%84%9F%E7%9F%A5%E7%9A%84%E5%AE%9E%E6%97%B6%E6%80%A7"><span class="toc-text">状态变更感知的实时性</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#Web"><span class="toc-text">Web</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E5%B0%8F%E7%A8%8B%E5%BA%8F"><span class="toc-text">小程序</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%A4%9A%E7%AB%AF%E7%99%BB%E5%BD%95"><span class="toc-text">多端登录</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E6%A8%A1%E5%9D%97%E8%AF%A6%E7%BB%86%E4%BB%8B%E7%BB%8D"><span class="toc-text">服务模块详细介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AF%B9%E5%A4%96api%E6%8E%A5%E5%8F%A3"><span class="toc-text">对外api接口</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-msg-gateway"><span class="toc-text">open_im_msg_gateway</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-api"><span class="toc-text">open_im_api</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-sdk-server"><span class="toc-text">open_im_sdk_server</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-demo"><span class="toc-text">open_im_demo</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-cms-api"><span class="toc-text">open_im_cms_api</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%86%85%E9%83%A8%E6%9C%8D%E5%8A%A1rpc%E6%8E%A5%E5%8F%A3"><span class="toc-text">内部服务rpc接口</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-user"><span class="toc-text">open_im_user</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-friend"><span class="toc-text">open_im_friend</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-msg"><span class="toc-text">open_im_msg</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-msg-gateway-1"><span class="toc-text">open_im_msg_gateway</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-group"><span class="toc-text">open_im_group</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-auth"><span class="toc-text">open_im_auth</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-msg-transfer"><span class="toc-text">open_im_msg_transfer</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-push"><span class="toc-text">open_im_push</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-statistics"><span class="toc-text">open_im_statistics</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-message-cms"><span class="toc-text">open_im_message_cms</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-admin-cms"><span class="toc-text">open_im_admin_cms</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-office"><span class="toc-text">open_im_office</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-organization"><span class="toc-text">open_im_organization</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-conversation"><span class="toc-text">open_im_conversation</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#open-im-cache"><span class="toc-text">open_im_cache</span></a></li></ol></li></ol></li></ol>
       
     </div>
   </div>
