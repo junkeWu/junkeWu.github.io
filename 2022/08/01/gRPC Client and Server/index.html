@@ -8,10 +8,13 @@
   <meta name="author" content="Junke Wu" />
   <meta name="description" content="坚持持续学习..." />
   
-    <meta name="robots" content="noindex" />
-  
   
   <title>
+    
+      gRPC Client and Server 
+      
+      
+      |
     
      主页
   </title>
@@ -112,149 +115,169 @@
 
 
       <div class="flex-container">
-        <div class="container index">
-  <div class="post-list">
-    <!-- 遍历渲染文章 -->
-    
-      <div class="post-item" title="为什么要分库分表？">
-        <div class="time-m-d">2022-05-24</div>
-        <div class="title">
-          <a href="/2022/05/24/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/">
-            
-              
-                <span>为什么要分库分表？</span>
-              
-            
-          </a>
-        </div>
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">gRPC Client and Server</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-08-01 21:52:30
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags" title="Tags"></i>
+                
+                <span class="span--tag">
+                  <a href="/tags/grpc/" title="grpc">
+                    <b>#</b> grpc
+                  </a>
+                </span>
+                
+              </span>
+          
       </div>
-    
-      <div class="post-item" title="Channel">
-        <div class="time-m-d">2022-05-19</div>
-        <div class="title">
-          <a href="/2022/05/19/Golagn%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-channel/">
-            
-              
-                <span>Channel</span>
-              
-            
-          </a>
-        </div>
+      <div class="markdown-body">
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p> Go 来编写 gRPC Server 和 Client所有库：</p>
+<ul>
+<li>google.golang.org&#x2F;grpc</li>
+<li>github.com&#x2F;golang&#x2F;protobuf&#x2F;protoc-gen-go</li>
+</ul>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><h3 id="gRPC"><a href="#gRPC" class="headerlink" title="gRPC"></a>gRPC</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go get -u google.golang.org/grpc</span><br></pre></td></tr></table></figure>
+
+<h3 id="Protocol-Buffers-v3"><a href="#Protocol-Buffers-v3" class="headerlink" title="Protocol Buffers v3"></a>Protocol Buffers v3</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wget https://github.com/google/protobuf/releases/download/v3.5.1/protobuf-all-3.5.1.zipunzip protobuf-all-3.5.1.zipcd protobuf-3.5.1/./configuremakemake install</span><br></pre></td></tr></table></figure>
+
+<p>检查是否安装成功</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">protoc --version</span><br></pre></td></tr></table></figure>
+
+<p>若出现以下错误，执行 <code>ldconfig</code> 命名就能解决这问题</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">protoc: error while loading shared libraries: libprotobuf.so.15: cannot open shared object file: No such file or directory</span><br></pre></td></tr></table></figure>
+
+<h3 id="Protoc-Plugin"><a href="#Protoc-Plugin" class="headerlink" title="Protoc Plugin"></a>Protoc Plugin</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go get -u github.com/golang/protobuf/protoc-gen-go</span><br></pre></td></tr></table></figure>
+
+<h3 id="grpc"><a href="#grpc" class="headerlink" title="grpc"></a>grpc</h3><p>图示<img src="/../images/rpc02.png" alt="rpc02.png"></p>
+<h3 id="目录结构"><a href="#目录结构" class="headerlink" title="目录结构"></a>目录结构</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├── README.md</span><br><span class="line">├── client</span><br><span class="line">│   └── client.go</span><br><span class="line">├── go.mod</span><br><span class="line">├── go.sum</span><br><span class="line">├── proto</span><br><span class="line">│   └── search.proto</span><br><span class="line">└── server</span><br><span class="line">    └── server.go</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="IDL"><a href="#IDL" class="headerlink" title="IDL"></a>IDL</h3><h4 id="编写"><a href="#编写" class="headerlink" title="编写"></a>编写</h4><p>在 proto 文件夹下的 search.proto 文件中，写入如下内容：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto3&quot;;</span><br><span class="line">package proto;</span><br><span class="line">service SearchService &#123;    rpc Search(SearchRequest) returns (SearchResponse) &#123;&#125;&#125;</span><br><span class="line">message SearchRequest &#123;    string request = 1;&#125;</span><br><span class="line">message SearchResponse &#123;    string response = 1;&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="生成"><a href="#生成" class="headerlink" title="生成"></a>生成</h4><p>在 proto 文件夹下执行如下命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ protoc --go_out=plugins=grpc:. *.proto</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>plugins&#x3D;plugin1+plugin2：指定要加载的子插件列表</li>
+</ul>
+<p>我们定义的 proto 文件是涉及了 RPC 服务的，而默认是不会生成 RPC 代码的，因此需要给出 <code>plugins</code> 参数传递给 <code>protoc-gen-go</code>，告诉它，请支持 RPC（这里指定了 gRPC）</p>
+<ul>
+<li>–go_out&#x3D;.：设置 Go 代码输出的目录</li>
+</ul>
+<p>该指令会加载 protoc-gen-go 插件达到生成 Go 代码的目的，生成的文件以 .pb.go 为文件后缀</p>
+<ul>
+<li>: （冒号）</li>
+</ul>
+<p>冒号充当分隔符的作用，后跟所需要的参数集。如果这处不涉及 RPC，命令可简化为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ protoc --go_out=. *.proto</span><br></pre></td></tr></table></figure>
+
+<p>注：建议你看看两条命令生成的 .pb.go 文件，分别有什么区别</p>
+
       </div>
-    
-      <div class="post-item" title="Map">
-        <div class="time-m-d">2022-05-19</div>
-        <div class="title">
-          <a href="/2022/05/19/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-map/">
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
             
-              
-                <span>Map</span>
-              
+              <a href="/2022/08/01/gRPC%E5%8F%8A%E7%9B%B8%E5%85%B3%E4%BB%8B%E7%BB%8D/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
             
-          </a>
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-08-01 21:52:30
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags" title="Tags"></i>
+                    
+                    <span class="span--tag">
+                      <a href="/tags/grpc/" title="grpc">
+                        <b>#</b> grpc
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2022/08/04/%E6%B2%A1%E6%9C%89accept%EF%BC%8C%E8%83%BD%E5%BB%BA%E7%AB%8BTCP%E8%BF%9E%E6%8E%A5%E5%90%97%EF%BC%9F/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
         </div>
-      </div>
+      
+    </div>
     
-      <div class="post-item" title="微服务">
-        <div class="time-m-d">2022-05-18</div>
-        <div class="title">
-          <a href="/2022/05/18/%E4%BB%80%E4%B9%88%E6%98%AF%E5%BE%AE%E6%9C%8D%E5%8A%A1%EF%BC%8C%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%94%A8%E5%BE%AE%E6%9C%8D%E5%8A%A1/">
-            
-              
-                <span>微服务</span>
-              
-            
-          </a>
-        </div>
-      </div>
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85"><span class="toc-text">安装</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#gRPC"><span class="toc-text">gRPC</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Protocol-Buffers-v3"><span class="toc-text">Protocol Buffers v3</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Protoc-Plugin"><span class="toc-text">Protoc Plugin</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#grpc"><span class="toc-text">grpc</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84"><span class="toc-text">目录结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IDL"><span class="toc-text">IDL</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%96%E5%86%99"><span class="toc-text">编写</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%94%9F%E6%88%90"><span class="toc-text">生成</span></a></li></ol></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
     
-      <div class="post-item" title="Slice">
-        <div class="time-m-d">2022-05-17</div>
-        <div class="title">
-          <a href="/2022/05/17/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-slice/">
-            
-              
-                <span>Slice</span>
-              
-            
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="网络IO详解">
-        <div class="time-m-d">2022-05-17</div>
-        <div class="title">
-          <a href="/2022/05/17/%E7%BD%91%E7%BB%9CIO%E8%AF%A6%E8%A7%A3/">
-            
-              
-                <span>网络IO详解</span>
-              
-            
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="详细讲解Linux内核epoll内核原理与实现">
-        <div class="time-m-d">2022-05-17</div>
-        <div class="title">
-          <a href="/2022/05/17/%E8%AF%A6%E7%BB%86%E8%AE%B2%E8%A7%A3Linux%E5%86%85%E6%A0%B8epoll%E5%86%85%E6%A0%B8%E5%8E%9F%E7%90%86%E4%B8%8E%E5%AE%9E%E7%8E%B0/">
-            
-              
-                <span>详细讲解Linux内核epoll内核原理与实现</span>
-              
-            
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="基础架构： 一个键值数据库包含什么">
-        <div class="time-m-d">2022-05-15</div>
-        <div class="title">
-          <a href="/2022/05/15/01%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%EF%BC%9A%E4%B8%80%E4%B8%AA%E9%94%AE%E5%80%BC%E6%95%B0%E6%8D%AE%E5%BA%93%E5%8C%85%E5%90%AB%E4%BB%80%E4%B9%88/">
-            
-              
-                <span>基础架构： 一个键值数据库包含什么</span>
-              
-            
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="how-to-learn-redis2">
-        <div class="time-m-d">2022-05-15</div>
-        <div class="title">
-          <a href="/2022/05/15/how-to-learn-redis2/">
-            
-              
-                <span>how-to-learn-redis2</span>
-              
-            
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="How To Learn Redis">
-        <div class="time-m-d">2022-05-15</div>
-        <div class="title">
-          <a href="/2022/05/15/how-to-learn-redis/">
-            
-              
-                <span>How To Learn Redis</span>
-              
-            
-          </a>
-        </div>
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
       </div>
     
   </div>
-  <nav class="post-navigation">
-    
-      <a href="/"><i class="iconfont icon-angleleft"></i></a>
-    
-    <span class="page-num">2 / 2</span>
-    
-  </nav>
-</div>
+
 
         
 <div class="footer">
@@ -514,6 +537,24 @@
 
 
         
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + gRPC%20Client%20and%20Server + '&url=' + http%3A%2F%2Fgithub.com%2F2022%2F08%2F01%2FgRPC%2520Client%2520and%2520Server%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/2022/08/01/gRPC%20Client%20and%20Server/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
   
   
 <script src="/js/shares.js"></script>

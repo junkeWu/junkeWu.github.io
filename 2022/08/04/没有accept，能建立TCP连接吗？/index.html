@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="keywords" content="" />
+  <meta name="author" content="Junke Wu" />
+  <meta name="description" content="坚持持续学习..." />
+  
+  
+  <title>
+    
+      没有accept，能建立TCP连接？ 
+      
+      
+      |
+    
+     主页
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="icon" href="/images/favicon.png">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  
+<link rel="stylesheet" href="/css/color-scheme.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+<link rel="stylesheet" href="/css/comments.css">
+
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+  <!-- fancybox -->
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <script async src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+
+  <!-- clipboard -->
+  
+    <script src="https://unpkg.com/clipboard@2/dist/clipboard.min.js"></script>
+    
+<script src="/js/codeCopy.js"></script>
+
+  
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.png" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">junke Wu</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">没有accept，能建立TCP连接？</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-08-04 15:08:47
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags" title="Tags"></i>
+                
+                <span class="span--tag">
+                  <a href="/tags/%E7%BD%91%E7%BB%9C/" title="网络">
+                    <b>#</b> 网络
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p><img src="/../images/%E7%BD%91%E7%BB%9C01.png" alt="网络01"></p>
+<p>以上是一个客户端和服务端建立连接时的流程</p>
+<h4 id="用golang实现下服务端的代码"><a href="#用golang实现下服务端的代码" class="headerlink" title="用golang实现下服务端的代码"></a>用golang实现下服务端的代码</h4><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">listen, err := net.Listen(&quot;tcp&quot;, &quot;127.0.0.1:8080&quot;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		return</span><br><span class="line">	&#125;</span><br><span class="line">	defer listen.Close()</span><br><span class="line">	time.Sleep(time.Second * 10)</span><br><span class="line">	for &#123;</span><br><span class="line">		// 从socket recive队列里获取一个建立好的连接</span><br><span class="line">		time.Sleep(time.Second * 10)   //  阻塞10秒</span><br><span class="line">		conn, err := listen.Accept()</span><br><span class="line">		if err != nil &#123;</span><br><span class="line">			return</span><br><span class="line">		&#125;</span><br><span class="line">		// 新起一个goroutine处理连接</span><br><span class="line">		go Handler(conn)</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	// handler</span><br><span class="line">func Handler(conn net.Conn) &#123;</span><br><span class="line">	defer conn.Close()</span><br><span class="line">	var dataBuffer bytes.Buffer</span><br><span class="line">	buf := make([]byte, 1024)</span><br><span class="line">	for &#123;</span><br><span class="line"></span><br><span class="line">		n, err := conn.Read(buf) // 从conn中读取客户端发送的数据内容</span><br><span class="line">		if err != nil &#123;</span><br><span class="line">			if err == io.EOF &#123;</span><br><span class="line">				fmt.Printf(&quot;客户端退出 err=%v\n&quot;, err)</span><br><span class="line">			&#125; else &#123;</span><br><span class="line">				fmt.Printf(&quot;read err=%v\n&quot;, err)</span><br><span class="line">			&#125;</span><br><span class="line">			break</span><br><span class="line">		&#125;</span><br><span class="line">		dataBuffer.Write(buf[:n])</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	fmt.Println(&quot;server:&quot;, dataBuffer.String())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="用golang实现客户端的代码"><a href="#用golang实现客户端的代码" class="headerlink" title="用golang实现客户端的代码"></a>用golang实现客户端的代码</h4><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">func main() &#123;</span><br><span class="line">	dial, err := net.Dial(&quot;tcp&quot;, &quot;127.0.0.1:8080&quot;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		return</span><br><span class="line">	&#125;</span><br><span class="line">	defer dial.Close()</span><br><span class="line">	dial.Write([]byte(&quot;hello, I am client&quot;))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>简单的建立连接发送请求</p>
+<h4 id="解析俩端代码"><a href="#解析俩端代码" class="headerlink" title="解析俩端代码"></a>解析俩端代码</h4><p>服务端基本代码</p>
+<ul>
+<li>通过net.listen（）进行绑定监听</li>
+<li>accept阻塞请求</li>
+<li>handler处理进来的请求</li>
+</ul>
+<p>客户端基本代码</p>
+<ul>
+<li><p>net.dial（）建立socket连接</p>
+</li>
+<li><p>发送请求数据</p>
+</li>
+</ul>
+<p>以上在正常情况下，就是服务端起了服务之后，会阻塞等待连接的进来，然后客户端发起请求后，请求数据会从服务端打印。</p>
+<p>但是我在accept加了10秒阻塞，那么就是说服务端起服务后，不会立马accept进行阻塞，这时候客户端又是怎么样的呢？</p>
+<h4 id="解析不加accept客户端请求"><a href="#解析不加accept客户端请求" class="headerlink" title="解析不加accept客户端请求"></a>解析不加accept客户端请求</h4><p>在不加accept的客户端请求，仍能完成3次握手。图示</p>
+<p><img src="/../images/%E7%BD%91%E7%BB%9C02" alt="网络01"></p>
+<p>在完成第三次握手后，会把socket从半连接队列移到全连接队列。</p>
+<ul>
+<li><strong>半连接队列（SYN队列）</strong>，服务端收到<strong>第一次握手</strong>后，会将<code>sock</code>加入到这个队列中，队列内的<code>sock</code>都处于<code>SYN_RECV</code> 状态。<ul>
+<li><strong>哈希表</strong></li>
+</ul>
+</li>
+<li><strong>全连接队列（ACCEPT队列）</strong>，在服务端收到<strong>第三次握手</strong>后，会将半连接队列的<code>sock</code>取出，放到全连接队列中。队列里的<code>sock</code>都处于 <code>ESTABLISHED</code>状态。这里面的连接，就<strong>等着服务端执行accept()后被取出了。</strong><ul>
+<li><strong>链表</strong></li>
+</ul>
+</li>
+</ul>
+<h4 id="为什么半连接队列要设计成哈希表"><a href="#为什么半连接队列要设计成哈希表" class="headerlink" title="为什么半连接队列要设计成哈希表"></a><strong>为什么半连接队列要设计成哈希表</strong></h4><p>先对比下<strong>全连接里队列</strong>，他本质是个链表，因为也是线性结构，说它是个队列也没毛病。它里面放的都是已经建立完成的连接，这些连接正等待被取走。而服务端取走连接的过程中，并不关心具体是哪个连接，只要是个连接就行，所以直接从队列头取就行了。这个过程算法复杂度为<code>O(1)</code>。</p>
+<p>而<strong>半连接队列</strong>却不太一样，因为队列里的都是不完整的连接，嗷嗷等待着第三次握手的到来。那么现在有一个第三次握手来了，则需要从队列里把相应IP端口的连接取出，<strong>如果半连接队列还是个链表，那我们就需要依次遍历，才能拿到我们想要的那个连接，算法复杂度就是O(n)。</strong></p>
+<p>而如果将半连接队列设计成哈希表，那么查找半连接的算法复杂度就回到<code>O(1)</code>了。</p>
+<p>因此出于效率考虑，全连接队列被设计成链表，而半连接队列被设计为哈希表。</p>
+<h4 id="全连接队列满了会怎么样？"><a href="#全连接队列满了会怎么样？" class="headerlink" title="全连接队列满了会怎么样？"></a><strong>全连接队列满了会怎么样？</strong></h4><p>如果队列满了，服务端还收到客户端的第三次握手ACK，默认当然会丢弃这个ACK。</p>
+<p>但除了丢弃之外，还有一些附带行为，这会受 <code>tcp_abort_on_overflow</code> 参数的影响。</p>
+<ul>
+<li><code>tcp_abort_on_overflow</code>设置为 0，全连接队列满了之后，会丢弃这个第三次握手ACK包，并且开启定时器，重传第二次握手的SYN+ACK，如果重传超过一定限制次数，还会把对应的<strong>半连接队列里的连接</strong>给删掉。</li>
+</ul>
+<p><img src="/../images/%E7%BD%91%E7%BB%9C03.png" alt="网络03"></p>
+<p>​															tcp_abort_on_overflow为0</p>
+<ul>
+<li><code>tcp_abort_on_overflow</code>设置为 1，全连接队列满了之后，就直接发RST给客户端，效果上看就是连接断了。</li>
+</ul>
+<p>服务端<strong>端口未监听</strong>时，客户端尝试去连接，服务端也会回一个RST。这两个情况长一样，所以客户端这时候收到RST之后，其实无法区分到底是<strong>端口未监听</strong>，还是<strong>全连接队列满了</strong>。</p>
+<p><img src="/../images/%E7%BD%91%E7%BB%9C04.png" alt="网络04"></p>
+<p>​																	tcp_abort_on_overflow为1</p>
+<h3 id="半连接队列要是满了会怎么样"><a href="#半连接队列要是满了会怎么样" class="headerlink" title="半连接队列要是满了会怎么样"></a><strong>半连接队列要是满了会怎么样</strong></h3><p><strong>一般是丢弃</strong>，但这个行为可以通过 <code>tcp_syncookies</code> 参数去控制。但比起这个，更重要的是先了解下半连接队列为什么会被打满。</p>
+<p>首先我们需要明白，一般情况下，半连接的”生存”时间其实很短，只有在第一次和第三次握手间，如果半连接都满了，说明服务端疯狂收到第一次握手请求，如果是线上游戏应用，能有这么多请求进来，那说明你可能要富了。但现实往往比较骨感，你可能遇到了<strong>SYN Flood攻击</strong>。</p>
+<p>所谓<strong>SYN Flood攻击</strong>，可以简单理解为，攻击方模拟客户端疯狂发第一次握手请求过来，在服务端憨憨地回复第二次握手过去之后，客户端死活不发第三次握手过来，这样做，可以把服务端半连接队列打满，从而导致正常连接不能正常进来。</p>
+<p><strong>那这种情况怎么处理？有没有一种方法可以绕过半连接队列？</strong></p>
+<ul>
+<li>通过<code>tcp_syncookies</code><ul>
+<li>当它被设置为1的时候，客户端发来<strong>第一次握手</strong>SYN时，服务端<strong>不会将其放入半连接队列中</strong>，而是直接生成一个<code>cookies</code>，这个<code>cookies</code>会跟着<strong>第二次握手</strong>，发回客户端。客户端在发<strong>第三次握手</strong>的时候带上这个<code>cookies</code>，服务端验证到它就是当初发出去的那个，就会建立连接并放入到全连接队列中。可以看出整个过程不再需要半连接队列的参与。</li>
+</ul>
+</li>
+</ul>
+<p><img src="/../images/%E7%BD%91%E7%BB%9C05.png" alt="网络05"></p>
+<h4 id="会有一个cookies队列吗"><a href="#会有一个cookies队列吗" class="headerlink" title="会有一个cookies队列吗"></a>会有一个cookies队列吗</h4><p>生成是<code>cookies</code>，保存在哪呢？<strong>是不是会有一个队列保存这些cookies？</strong></p>
+<p>我们可以反过来想一下，如果有<code>cookies</code>队列，那它会跟半连接队列一样，到头来，还是会被<strong>SYN Flood 攻击</strong>打满。</p>
+<p>实际上<code>cookies</code>并不会有一个专门的队列保存，它是通过<strong>通信双方的IP地址端口、时间戳、MSS</strong>等信息进行<strong>实时计算</strong>的，保存在<strong>TCP报头</strong>的<code>seq</code>里。</p>
+<h4 id="cookies方案为什么不直接取代半连接队列？"><a href="#cookies方案为什么不直接取代半连接队列？" class="headerlink" title="cookies方案为什么不直接取代半连接队列？"></a>cookies方案为什么不直接取代半连接队列？</h4><p>目前看下来<code>syn cookies</code>方案省下了半连接队列所需要的队列内存，还能解决 <strong>SYN Flood攻击</strong>，那为什么不直接取代半连接队列？</p>
+<p>凡事皆有利弊，<code>cookies</code>方案虽然能防 <strong>SYN Flood攻击</strong>，但是也有一些问题。因为服务端并不会保存连接信息，所以如果传输过程中数据包丢了，也不会重发第二次握手的信息。</p>
+<p>另外，编码解码<code>cookies</code>，都是比较<strong>耗CPU</strong>的，利用这一点，如果此时攻击者构造大量的<strong>第三次握手包（ACK包）</strong>，同时带上各种瞎编的<code>cookies</code>信息，服务端收到<code>ACK包</code>后<strong>以为是正经cookies</strong>，憨憨地跑去解码（<strong>耗CPU</strong>），最后发现不是正经数据包后才丢弃。</p>
+<p>这种通过构造大量<code>ACK包</code>去消耗服务端资源的攻击，叫<strong>ACK攻击</strong>，受到攻击的服务器可能会因为<strong>CPU资源耗尽</strong>导致没能响应正经请求。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li><strong>每一个</strong><code>socket</code>执行<code>listen</code>时，内核都会自动创建一个半连接队列和全连接队列。</li>
+<li>第三次握手前，TCP连接会放在半连接队列中，直到第三次握手到来，才会被放到全连接队列中。</li>
+<li><code>accept方法</code>只是为了从全连接队列中拿出一条连接，本身跟三次握手几乎<strong>毫无关系</strong>。</li>
+<li>出于效率考虑，虽然都叫队列，但半连接队列其实被设计成了<strong>哈希表</strong>，而全连接队列本质是链表。</li>
+<li>全连接队列满了，再来第三次握手也会丢弃，此时如果<code>tcp_abort_on_overflow=1</code>，还会直接发<code>RST</code>给客户端。</li>
+<li>半连接队列满了，可能是因为受到了<code>SYN Flood</code>攻击，可以设置<code>tcp_syncookies</code>，绕开半连接队列。</li>
+<li>客户端没有半连接队列和全连接队列，但有一个<strong>全局hash</strong>，可以通过它实现自连接或TCP同时打开。</li>
+</ul>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/08/01/gRPC%20Client%20and%20Server/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-08-04 15:08:47
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags" title="Tags"></i>
+                    
+                    <span class="span--tag">
+                      <a href="/tags/%E7%BD%91%E7%BB%9C/" title="网络">
+                        <b>#</b> 网络
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%94%A8golang%E5%AE%9E%E7%8E%B0%E4%B8%8B%E6%9C%8D%E5%8A%A1%E7%AB%AF%E7%9A%84%E4%BB%A3%E7%A0%81"><span class="toc-text">用golang实现下服务端的代码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%94%A8golang%E5%AE%9E%E7%8E%B0%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84%E4%BB%A3%E7%A0%81"><span class="toc-text">用golang实现客户端的代码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A7%A3%E6%9E%90%E4%BF%A9%E7%AB%AF%E4%BB%A3%E7%A0%81"><span class="toc-text">解析俩端代码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A7%A3%E6%9E%90%E4%B8%8D%E5%8A%A0accept%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%AF%B7%E6%B1%82"><span class="toc-text">解析不加accept客户端请求</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8D%8A%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97%E8%A6%81%E8%AE%BE%E8%AE%A1%E6%88%90%E5%93%88%E5%B8%8C%E8%A1%A8"><span class="toc-text">为什么半连接队列要设计成哈希表</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%A8%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97%E6%BB%A1%E4%BA%86%E4%BC%9A%E6%80%8E%E4%B9%88%E6%A0%B7%EF%BC%9F"><span class="toc-text">全连接队列满了会怎么样？</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8A%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97%E8%A6%81%E6%98%AF%E6%BB%A1%E4%BA%86%E4%BC%9A%E6%80%8E%E4%B9%88%E6%A0%B7"><span class="toc-text">半连接队列要是满了会怎么样</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%9A%E6%9C%89%E4%B8%80%E4%B8%AAcookies%E9%98%9F%E5%88%97%E5%90%97"><span class="toc-text">会有一个cookies队列吗</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#cookies%E6%96%B9%E6%A1%88%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E7%9B%B4%E6%8E%A5%E5%8F%96%E4%BB%A3%E5%8D%8A%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97%EF%BC%9F"><span class="toc-text">cookies方案为什么不直接取代半连接队列？</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="github" href="https://github.com/junkeWu">
+            <i class="iconfont icon-github"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="email" href="">
+            <i class="iconfont icon-envelope"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a href="https://github.com/junkeWu">Copyright © 2022 junkeWu</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a href="https://github.com/zchengsite/hexo-theme-oranges">Theme by zchengsite | Powered by Hexo</a>
+        
+    </div>
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %E6%B2%A1%E6%9C%89accept%EF%BC%8C%E8%83%BD%E5%BB%BA%E7%AB%8BTCP%E8%BF%9E%E6%8E%A5%EF%BC%9F + '&url=' + http%3A%2F%2Fgithub.com%2F2022%2F08%2F04%2F%25E6%25B2%25A1%25E6%259C%2589accept%25EF%25BC%258C%25E8%2583%25BD%25E5%25BB%25BA%25E7%25AB%258BTCP%25E8%25BF%259E%25E6%258E%25A5%25E5%2590%2597%25EF%25BC%259F%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/2022/08/04/%E6%B2%A1%E6%9C%89accept%EF%BC%8C%E8%83%BD%E5%BB%BA%E7%AB%8BTCP%E8%BF%9E%E6%8E%A5%E5%90%97%EF%BC%9F/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

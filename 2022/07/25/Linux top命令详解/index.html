@@ -8,10 +8,13 @@
   <meta name="author" content="Junke Wu" />
   <meta name="description" content="坚持持续学习..." />
   
-    <meta name="robots" content="noindex" />
-  
   
   <title>
+    
+      Linux top命令详解 
+      
+      
+      |
     
      主页
   </title>
@@ -112,149 +115,130 @@
 
 
       <div class="flex-container">
-        <div class="container index">
-  <div class="post-list">
-    <!-- 遍历渲染文章 -->
-    
-      <div class="post-item" title="为什么要分库分表？">
-        <div class="time-m-d">2022-05-24</div>
-        <div class="title">
-          <a href="/2022/05/24/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/">
-            
-              
-                <span>为什么要分库分表？</span>
-              
-            
-          </a>
-        </div>
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">Linux top命令详解</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-07-25 09:00:00
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags" title="Tags"></i>
+                
+                <span class="span--tag">
+                  <a href="/tags/linux/" title="linux">
+                    <b>#</b> linux
+                  </a>
+                </span>
+                
+              </span>
+          
       </div>
-    
-      <div class="post-item" title="Channel">
-        <div class="time-m-d">2022-05-19</div>
-        <div class="title">
-          <a href="/2022/05/19/Golagn%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-channel/">
-            
-              
-                <span>Channel</span>
-              
-            
-          </a>
-        </div>
+      <div class="markdown-body">
+        <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a><strong>背景</strong></h3><p>性能测试时，通常用top命令观察cpu、<a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=%E5%86%85%E5%AD%98&spm=1001.2101.3001.7020">内存</a>使用情况</p>
+<h3 id="top初体验"><a href="#top初体验" class="headerlink" title="top初体验"></a>top初体验</h3><p>进入linux系统，输入top命令</p>
+
       </div>
-    
-      <div class="post-item" title="Map">
-        <div class="time-m-d">2022-05-19</div>
-        <div class="title">
-          <a href="/2022/05/19/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-map/">
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
             
-              
-                <span>Map</span>
-              
+              <a href="/2022/07/11/Open_IM-Server/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
             
-          </a>
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-07-25 09:00:00
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags" title="Tags"></i>
+                    
+                    <span class="span--tag">
+                      <a href="/tags/linux/" title="linux">
+                        <b>#</b> linux
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2022/08/01/gRPC%E5%8F%8A%E7%9B%B8%E5%85%B3%E4%BB%8B%E7%BB%8D/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
         </div>
-      </div>
+      
+    </div>
     
-      <div class="post-item" title="微服务">
-        <div class="time-m-d">2022-05-18</div>
-        <div class="title">
-          <a href="/2022/05/18/%E4%BB%80%E4%B9%88%E6%98%AF%E5%BE%AE%E6%9C%8D%E5%8A%A1%EF%BC%8C%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%94%A8%E5%BE%AE%E6%9C%8D%E5%8A%A1/">
-            
-              
-                <span>微服务</span>
-              
-            
-          </a>
-        </div>
-      </div>
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%83%8C%E6%99%AF"><span class="toc-text">背景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#top%E5%88%9D%E4%BD%93%E9%AA%8C"><span class="toc-text">top初体验</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
     
-      <div class="post-item" title="Slice">
-        <div class="time-m-d">2022-05-17</div>
-        <div class="title">
-          <a href="/2022/05/17/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-slice/">
-            
-              
-                <span>Slice</span>
-              
-            
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="网络IO详解">
-        <div class="time-m-d">2022-05-17</div>
-        <div class="title">
-          <a href="/2022/05/17/%E7%BD%91%E7%BB%9CIO%E8%AF%A6%E8%A7%A3/">
-            
-              
-                <span>网络IO详解</span>
-              
-            
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="详细讲解Linux内核epoll内核原理与实现">
-        <div class="time-m-d">2022-05-17</div>
-        <div class="title">
-          <a href="/2022/05/17/%E8%AF%A6%E7%BB%86%E8%AE%B2%E8%A7%A3Linux%E5%86%85%E6%A0%B8epoll%E5%86%85%E6%A0%B8%E5%8E%9F%E7%90%86%E4%B8%8E%E5%AE%9E%E7%8E%B0/">
-            
-              
-                <span>详细讲解Linux内核epoll内核原理与实现</span>
-              
-            
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="基础架构： 一个键值数据库包含什么">
-        <div class="time-m-d">2022-05-15</div>
-        <div class="title">
-          <a href="/2022/05/15/01%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84%EF%BC%9A%E4%B8%80%E4%B8%AA%E9%94%AE%E5%80%BC%E6%95%B0%E6%8D%AE%E5%BA%93%E5%8C%85%E5%90%AB%E4%BB%80%E4%B9%88/">
-            
-              
-                <span>基础架构： 一个键值数据库包含什么</span>
-              
-            
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="how-to-learn-redis2">
-        <div class="time-m-d">2022-05-15</div>
-        <div class="title">
-          <a href="/2022/05/15/how-to-learn-redis2/">
-            
-              
-                <span>how-to-learn-redis2</span>
-              
-            
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="How To Learn Redis">
-        <div class="time-m-d">2022-05-15</div>
-        <div class="title">
-          <a href="/2022/05/15/how-to-learn-redis/">
-            
-              
-                <span>How To Learn Redis</span>
-              
-            
-          </a>
-        </div>
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
       </div>
     
   </div>
-  <nav class="post-navigation">
-    
-      <a href="/"><i class="iconfont icon-angleleft"></i></a>
-    
-    <span class="page-num">2 / 2</span>
-    
-  </nav>
-</div>
+
 
         
 <div class="footer">
@@ -514,6 +498,24 @@
 
 
         
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + Linux%20top%E5%91%BD%E4%BB%A4%E8%AF%A6%E8%A7%A3 + '&url=' + http%3A%2F%2Fgithub.com%2F2022%2F07%2F25%2FLinux%2520top%25E5%2591%25BD%25E4%25BB%25A4%25E8%25AF%25A6%25E8%25A7%25A3%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/2022/07/25/Linux%20top%E5%91%BD%E4%BB%A4%E8%AF%A6%E8%A7%A3/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
   
   
 <script src="/js/shares.js"></script>
