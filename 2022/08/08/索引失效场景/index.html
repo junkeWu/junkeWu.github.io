@@ -11,8 +11,8 @@
   
   <title>
     
-      Tag 
-       : mysql
+      mysql索引失效场景 
+      
       
       |
     
@@ -115,57 +115,145 @@
 
 
       <div class="flex-container">
-        <!-- 标签详情页，展示某个标签下的文章列表，url形式：https://yoursite/tags/某个标签/ -->
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
 
-<div class="container tag-details">
-  <div class="content-title">
-    <h2>
-      <span>mysql</span>
-    </h2>
+<!-- LaTex Display -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">mysql索引失效场景</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-08-08 10:37:35
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags" title="Tags"></i>
+                
+                <span class="span--tag">
+                  <a href="/tags/mysql/" title="mysql">
+                    <b>#</b> mysql
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <ul>
+<li>查询条件包含or，可能导致索引失效</li>
+<li><ol start="2">
+<li>如何字段类型是字符串，where时一定用引号括起来，否则索引失效</li>
+</ol>
+</li>
+<li><ol start="3">
+<li>like通配符可能导致索引失效。</li>
+</ol>
+</li>
+<li><ol start="4">
+<li>联合索引，查询时的条件列不是联合索引中的第一个列，索引失效。</li>
+</ol>
+</li>
+<li><ol start="5">
+<li>在索引列上使用mysql的内置函数，索引失效。</li>
+</ol>
+</li>
+<li><ol start="6">
+<li>对索引列运算（如，+、-、*、&#x2F;），索引失效。</li>
+</ol>
+</li>
+<li><ol start="7">
+<li>索引字段上使用（！&#x3D; 或者 &lt; &gt;，not in）时，可能会导致索引失效。</li>
+</ol>
+</li>
+<li><ol start="8">
+<li>索引字段上使用is null， is not null，可能导致索引失效。</li>
+</ol>
+</li>
+<li><ol start="9">
+<li>左连接查询或者右连接查询查询关联的字段编码格式不一样，可能导致索引失效。</li>
+</ol>
+</li>
+<li><ol start="10">
+<li>mysql估计使用全表扫描要比使用索引快,则不使用索引。</li>
+</ol>
+</li>
+</ul>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/08/08/mysql-mvcc%E5%8E%9F%E7%90%86/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-08-08 10:37:35
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags" title="Tags"></i>
+                    
+                    <span class="span--tag">
+                      <a href="/tags/mysql/" title="mysql">
+                        <b>#</b> mysql
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
   </div>
-  
-    <div class="post-list">
-      <div class="post-item" title="mysql索引失效场景">
-        <span class="time-m-d">2022-08-08</span>
-        <a href="/2022/08/08/%E7%B4%A2%E5%BC%95%E5%A4%B1%E6%95%88%E5%9C%BA%E6%99%AF/">
-          <span>mysql索引失效场景</span>
-        </a>
-      </div>
-    </div>
-  
-    <div class="post-list">
-      <div class="post-item" title="Mysql Mvcc原理">
-        <span class="time-m-d">2022-08-08</span>
-        <a href="/2022/08/08/mysql-mvcc%E5%8E%9F%E7%90%86/">
-          <span>Mysql Mvcc原理</span>
-        </a>
-      </div>
-    </div>
-  
-    <div class="post-list">
-      <div class="post-item" title="mysql面试题">
-        <span class="time-m-d">2022-06-27</span>
-        <a href="/2022/06/27/mysql/">
-          <span>mysql面试题</span>
-        </a>
-      </div>
-    </div>
-  
-    <div class="post-list">
-      <div class="post-item" title="mysql搭建主从服务器">
-        <span class="time-m-d">2022-06-04</span>
-        <a href="/2022/06/04/mysql%E6%90%AD%E5%BB%BA%E4%B8%BB%E4%BB%8E%E6%9C%8D%E5%8A%A1%E5%99%A8/">
-          <span>mysql搭建主从服务器</span>
-        </a>
-      </div>
-    </div>
-  
-  <nav class="post-navigation">
-    
-    <span class="page-num">1 / 1</span>
-    
-  </nav>
-</div>
+
 
         
 <div class="footer">
@@ -425,6 +513,24 @@
 
 
         
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + mysql%E7%B4%A2%E5%BC%95%E5%A4%B1%E6%95%88%E5%9C%BA%E6%99%AF + '&url=' + http%3A%2F%2Fgithub.com%2F2022%2F08%2F08%2F%25E7%25B4%25A2%25E5%25BC%2595%25E5%25A4%25B1%25E6%2595%2588%25E5%259C%25BA%25E6%2599%25AF%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/2022/08/08/%E7%B4%A2%E5%BC%95%E5%A4%B1%E6%95%88%E5%9C%BA%E6%99%AF/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
   
   
 <script src="/js/shares.js"></script>

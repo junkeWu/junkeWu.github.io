@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="keywords" content="" />
+  <meta name="author" content="Junke Wu" />
+  <meta name="description" content="坚持持续学习..." />
+  
+  
+  <title>
+    
+      Mysql Mvcc原理 
+      
+      
+      |
+    
+     主页
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="icon" href="/images/favicon.png">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  
+<link rel="stylesheet" href="/css/color-scheme.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+<link rel="stylesheet" href="/css/comments.css">
+
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+  <!-- fancybox -->
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <script async src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+
+  <!-- clipboard -->
+  
+    <script src="https://unpkg.com/clipboard@2/dist/clipboard.min.js"></script>
+    
+<script src="/js/codeCopy.js"></script>
+
+  
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.png" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">junke Wu</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">Mysql Mvcc原理</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-08-08 09:02:25
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags" title="Tags"></i>
+                
+                <span class="span--tag">
+                  <a href="/tags/mysql/" title="mysql">
+                    <b>#</b> mysql
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>MVCC (Multi-Version Concurrency Control) (注：与MVCC相对的，是基于锁的并发控制，Lock-Based Concurrency Control)是一种基于多版本的并发控制协议，只有在InnoDB引擎下存在。MVCC是为了实现事务的隔离性，通过版本号，避免同一数据在不同事务间的竞争，你可以把它当成基于多版本号的一种乐观锁。当然，这种乐观锁只在事务级别提交读和可重复读有效。MVCC最大的好处，相信也是耳熟能详：读不加锁，读写不冲突。在读多写少的OLTP应用中，读写不冲突是非常重要的，极大的增加了系统的并发性能。<br>不仅是MySQL，包括Oracle，PostgreSQL等其他数据库系统也都实现了MVCC，但各自的实现机制不尽相同，因为MVCC没有一个统一的实现标准。</p>
+<p>可以认为MVCC是行级锁的一个变种，但是它在很多情况下避免了加锁操作，因此开销更低。虽然实现机制有所不同，但大都实现了非阻塞的读操作，写操作也只锁定必要的行。</p>
+<p>MVCC的实现方式有多种，典型的有乐观(optimistic)并发控制 和 悲观(pessimistic)并发控制。</p>
+<p>MVCC只在 READ COMMITTED 和 REPEATABLE READ 两个隔离级别下工作。其他两个隔离级别和MVCC不兼容，因为 READ UNCOMMITTED 总是读取最新的数据行，而不是符合当前事务版本的数据行。而 SERIALIZABLE 则会对所有读取的行都加锁。</p>
+<h2 id="数据库四大隔离级别"><a href="#数据库四大隔离级别" class="headerlink" title="数据库四大隔离级别"></a><strong>数据库四大隔离级别</strong></h2><p>为了解决并发事务存在的<strong>脏读、不可重复读、幻读</strong>等问题，数据库大叔设计了四种隔离级别。分别是<strong>读未提交，读已提交，可重复读，串行化</strong>（Serializable）。</p>
+<ul>
+<li>读未提交隔离级别：只限制了两个数据不能同时修改，但是修改数据的时候，即使事务未提交，都是可以被别的事务读取到的，这级别的事务隔离有脏读、重复读、幻读的问题；</li>
+<li>读已提交隔离级别：当前事务只能读取到其他事务提交的数据，所以这种事务的隔离级别解决了脏读问题，但还是会存在重复读、幻读问题；</li>
+<li>可重复读：限制了读取数据的时候，不可以进行修改，所以解决了重复读的问题，但是读取范围数据的时候，是可以插入数据，所以还会存在幻读问题；</li>
+<li>串行化：事务最高的隔离级别，在该级别下，所有事务都是进行串行化顺序执行的。可以避免脏读、不可重复读与幻读所有并发问题。但是这种事务隔离级别下，事务执行很耗性能。</li>
+</ul>
+<p>四大隔离级别，都会存在哪些<strong>并发问题</strong>呢？</p>
+<table>
+<thead>
+<tr>
+<th align="left">隔离级别</th>
+<th align="left">脏读</th>
+<th align="left">不可重复读</th>
+<th align="left">幻读</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">读未提交</td>
+<td align="left">√</td>
+<td align="left">√</td>
+<td align="left">√</td>
+</tr>
+<tr>
+<td align="left">读已提交</td>
+<td align="left">×</td>
+<td align="left">√</td>
+<td align="left">√</td>
+</tr>
+<tr>
+<td align="left">可重复读</td>
+<td align="left">×</td>
+<td align="left">×</td>
+<td align="left">√</td>
+</tr>
+<tr>
+<td align="left">串行化</td>
+<td align="left">×</td>
+<td align="left">×</td>
+<td align="left">×</td>
+</tr>
+</tbody></table>
+<h2 id="MVCC的实现机制"><a href="#MVCC的实现机制" class="headerlink" title="MVCC的实现机制"></a>MVCC的实现机制</h2><p>InnoDB在每行数据都增加三个隐藏字段，一个唯一行号（InnoDB表中在没有默认主键的情况下会生成一个6字节空间的自动增长主键），一个记录创建的版本号，一个记录回滚的版本号。</p>
+<p><img src="/../images/mvcc01.png" alt="mvcc01"></p>
+<ul>
+<li>这里指针记录的应该是数组的第一个的地址位</li>
+</ul>
+<p>在多版本并发控制中，为了保证数据操作在多线程过程中，保证事务隔离的机制，降低锁竞争的压力，保证较高的并发量。在每开启一个事务时，会生成一个事务的版本号，被操作的数据会生成一条新的数据行（临时），但是在提交前对其他事务是不可见的，对于数据的更新（包括增删改）操作成功，会将这个版本号更新到数据的行中，事务提交成功，将新的版本号更新到此数据行中，这样保证了每个事务操作的数据，都是互不影响的，也不存在锁的问题。</p>
+<h2 id="undo-log"><a href="#undo-log" class="headerlink" title="undo-log"></a>undo-log</h2><p>undo log是为回滚而用，具体内容就是copy事务前的数据库内容（行）到undo buffer，在适合的时间把undo buffer中的内容刷新到磁盘。undo buffer与redo buffer一样，也是环形缓冲，但当缓冲满的时候，undo buffer中的内容会也会被刷新到磁盘；与redo log不同的是，磁盘上不存在单独的undo log文件，所有的undo log均存放在主ibd数据文件中（表空间），即使客户端设置了每表一个数据文件也是如此。</p>
+<h2 id="事务Snapshot和Read-View"><a href="#事务Snapshot和Read-View" class="headerlink" title="事务Snapshot和Read View"></a>事务Snapshot和Read View</h2><h3 id="事务快照"><a href="#事务快照" class="headerlink" title="事务快照"></a>事务快照</h3><p>是用来存储数据库的事务运行情况。一个事务快照的创建过程可以概括为：</p>
+<ul>
+<li>查看当前所有的未提交并活跃的事务，存储在数组中</li>
+<li>选取未提交并活跃的事务中最小的XID，记录在快照的xmin中</li>
+<li>选取所有已提交事务中最大的XID，加1后记录在xmax中</li>
+</ul>
+<h3 id="Read-View"><a href="#Read-View" class="headerlink" title="Read View"></a>Read View</h3><p>（主要是用来做可见性判断的）：创建一个新事务时，copy一份当前系统中的活跃事务列表。意思是，当前不应该被本事务看到的其他事务id列表。</p>
+<p>对于Read View快照的生成时机，也非常关键，正是因为生成时机的不同，造成了RC，RR两种隔离级别的不同可见性；</p>
+<p>在innodb中(默认repeatable read级别)，事务在begin&#x2F;start transaction之后的第一条select读操作后，会创建一个快照(Read View)，将当前系统中活跃的其他事务记录记录起来<br>在innodb中(read committed级别)，事务中每条select语句都会创建一个快照(Read View)对于Read View快照的生成时机，也非常关键，正是因为生成时机的不同，造成了RC，RR两种隔离级别的不同可见性；</p>
+<ul>
+<li>在innodb中(默认repeatable read级别)，事务在begin&#x2F;start transaction之后的第一条select读操作后，会创建一个快照(Read View)，将当前系统中活跃的其他事务记录记录起来。</li>
+<li>在innodb中(read committed级别)，事务中每条select语句都会创建一个快照(Read View)。</li>
+</ul>
+<p><strong>RC是语句级多版本(事务的多条只读语句，创建不同的ReadView，代价更高)，RR是事务级多版本(一个ReadView)；</strong></p>
+<h3 id="Read-View可见性规则"><a href="#Read-View可见性规则" class="headerlink" title="Read View可见性规则"></a><strong>Read View可见性规则</strong></h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">read committed 总是读最新一份快照数据，而repeatable read 读事务开始时的行数据版本。</span><br><span class="line"> </span><br><span class="line">read Commited隔离级别判断算法在每次语句执行的过程中，都关闭read_view, 重新创建当前的一份新的read_view。</span><br><span class="line"> </span><br><span class="line">read view中事务id  T_min~T_max，当前事务T1。</span><br><span class="line">...执行sql，创建一份最新的read_view;</span><br><span class="line">...T1&lt;T_min，说明T1事务比较早，该行对当前事务T1可见。</span><br><span class="line">...T1 &gt; T_max，说明T1比较晚，该行对当前事务不可见，根据DB_ROLL_PTR找到上一个判断再次判断。</span><br><span class="line">...T_min &lt;= T1 &lt;= T_max，如果read_view中有该事务，则不可见,找上一个版本。如果不在则可见(在read commited下)。</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th align="left">变量</th>
+<th align="left">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">m_ids</td>
+<td align="left">当前系统中那些活跃(未提交)的读写事务ID, 它数据结构为一个List。</td>
+</tr>
+<tr>
+<td align="left">max_limit_id</td>
+<td align="left">表示生成Read View时，系统中应该分配给下一个事务的id值。</td>
+</tr>
+<tr>
+<td align="left">min_limit_id</td>
+<td align="left">表示在生成Read View时，当前系统中活跃的读写事务中最小的事务id，即m_ids中的最小值。</td>
+</tr>
+<tr>
+<td align="left">creator_trx_id</td>
+<td align="left">创建当前Read View的事务ID</td>
+</tr>
+</tbody></table>
+<p>Read View的<strong>可见性规则</strong>如下：</p>
+<ul>
+<li>如果数据事务ID <code>trx_id &lt; min_limit_id</code>，表明生成该版本的事务在生成<code>Read View</code>前，已经提交(因为事务ID是递增的)，所以该版本可以被当前事务访问。</li>
+<li>如果<code>trx_id&gt;= max_limit_id</code>，表明生成该版本的事务在生成<code>Read View</code>后才生成，所以该版本不可以被当前事务访问。</li>
+<li>如果 <code>min_limit_id =&lt;trx_id&lt; max_limit_id</code>,需要分3种情况讨论<ul>
+<li>1）如果<code>m_ids</code>包含<code>trx_id</code>,则代表<code>Read View</code>生成时刻，这个事务还未提交，但是如果数据的<code>trx_id</code>等于<code>creator_trx_id</code>的话，表明数据是自己生成的，因此是可见的。</li>
+<li>2）如果<code>m_ids</code>包含<code>trx_id</code>，并且<code>trx_id</code>不等于<code>creator_trx_id</code>，则<code>Read View</code>生成时，事务未提交，并且不是自己生产的，所以当前事务也是看不见的；</li>
+<li>3）如果<code>m_ids</code>不包含<code>trx_id</code>，则说明你这个事务在<code>Read View</code>生成之前就已经提交了，修改的结果，当前事务是能看见的。</li>
+</ul>
+</li>
+</ul>
+<h2 id="可重复读实现原理"><a href="#可重复读实现原理" class="headerlink" title="可重复读实现原理"></a><strong>可重复读实现原理</strong></h2><p>查询一条记录，基于<strong>MVCC</strong>，是怎样的流程呢？</p>
+<ol>
+<li>获取事务自己的版本号，即事务ID</li>
+<li>获取Read View</li>
+<li>查询得到的数据，然后Read View中的事务版本号进行比较。</li>
+<li>如果不符合Read View的可见性规则， 即就需要Undo log中历史快照;</li>
+<li>最后返回符合规则的数据</li>
+</ol>
+<p>InnoDB 实现<strong>MVCC</strong>，是通过<code>Read View+ Undo Log</code>实现的，<code>Undo Log</code>保存了历史快照，<code>Read View</code>可见性规则帮助判断当前版本的数据是否可见。</p>
+<p>可重复读（RR）隔离级别，是如何解决不可重复读问题的？</p>
+<p>假设存在事务A和B，SQL执行流程如下</p>
+<p><img src="/../images/mvcc02.png" alt="mvcc02"></p>
+<p>假设当前有一张core_user表，插入一条初始化数据,如下：</p>
+<p><img src="/../images/mvcc03.png" alt="mvcc03"></p>
+<p>基于MVCC，我们来看看执行流程</p>
+<ol>
+<li>A开启事务，首先得到一个事务ID为100</li>
+<li>B开启事务，得到事务ID为101</li>
+<li>事务A生成一个Read View，read view对应的值如下</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th align="left">变量</th>
+<th align="left">值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">m_ids</td>
+<td align="left">100，101</td>
+</tr>
+<tr>
+<td align="left">max_limit_id</td>
+<td align="left">102</td>
+</tr>
+<tr>
+<td align="left">min_limit_id</td>
+<td align="left">100</td>
+</tr>
+<tr>
+<td align="left">creator_trx_id</td>
+<td align="left">100</td>
+</tr>
+</tbody></table>
+<p>然后回到版本链：开始从版本链中挑选可见的记录：</p>
+<p>开始执行<strong>read view可见性规则</strong>校验：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">min_limit_id(100)=&lt;trx_id（100）&lt;102;</span><br><span class="line">creator_trx_id = trx_id =100;</span><br></pre></td></tr></table></figure>
+
+<p>由此可得，trx_id&#x3D;100的这个记录，当前事务是可见的。所以查到是<strong>name为echo</strong>的记录。</p>
+<ol>
+<li>事务B进行修改操作，把age改为21。把原数据拷贝到undo log,然后对数据进行修改，标记事务ID和上一个数据版本在undo log的地址。</li>
+</ol>
+<p><img src="/../images/mvcc04.png" alt="mvcc04"></p>
+<ol>
+<li><p>事务B提交事务</p>
+</li>
+<li><p>事务A再次执行查询操作，因为是RR（可重复读）隔离级别，因此会复用老的Read View副本，Read View对应的值如下</p>
+</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th align="left">变量</th>
+<th align="left">值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">m_ids</td>
+<td align="left">100，101</td>
+</tr>
+<tr>
+<td align="left">max_limit_id</td>
+<td align="left">102</td>
+</tr>
+<tr>
+<td align="left">min_limit_id</td>
+<td align="left">100</td>
+</tr>
+<tr>
+<td align="left">creator_trx_id</td>
+<td align="left">100</td>
+</tr>
+</tbody></table>
+<p>从图可得，最新版本的列age的内容是21，该版本的trx_id值为101。开始执行read view可见性规则校验：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">min_limit_id(100)=&lt;trx_id（101）&lt;max_limit_id（102);</span><br><span class="line">因为m_ids&#123;100,101&#125;包含trx_id（101），</span><br><span class="line">并且creator_trx_id (100) 不等于trx_id（101）</span><br></pre></td></tr></table></figure>
+
+<p>所以，<code>trx_id=101</code>这个记录，对于当前事务是不可见的。这时候呢，版本链<code>roll_pointer</code>跳到下一个版本，<code>trx_id=100</code>这个记录，再次校验是否可见：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">min_limit_id(100)=&lt;trx_id（100）&lt; max_limit_id（102);</span><br><span class="line">因为m_ids&#123;100,101&#125;包含trx_id（100），</span><br><span class="line">并且creator_trx_id (100) 等于trx_id（100）</span><br></pre></td></tr></table></figure>
+
+<p>所以，trx_id&#x3D;100这个记录，对于当前事务是可见的，所以两次查询结果，都是age&#x3D;18的那个记录。即在可重复读（RR）隔离级别下，复用老的Read View副本，解决了不可重复读的问题。</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/08/04/%E6%B2%A1%E6%9C%89accept%EF%BC%8C%E8%83%BD%E5%BB%BA%E7%AB%8BTCP%E8%BF%9E%E6%8E%A5%E5%90%97%EF%BC%9F/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-08-08 09:02:25
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags" title="Tags"></i>
+                    
+                    <span class="span--tag">
+                      <a href="/tags/mysql/" title="mysql">
+                        <b>#</b> mysql
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2022/08/08/%E7%B4%A2%E5%BC%95%E5%A4%B1%E6%95%88%E5%9C%BA%E6%99%AF/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E5%9B%9B%E5%A4%A7%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB"><span class="toc-text">数据库四大隔离级别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MVCC%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%9C%BA%E5%88%B6"><span class="toc-text">MVCC的实现机制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#undo-log"><span class="toc-text">undo-log</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1Snapshot%E5%92%8CRead-View"><span class="toc-text">事务Snapshot和Read View</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E5%BF%AB%E7%85%A7"><span class="toc-text">事务快照</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Read-View"><span class="toc-text">Read View</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Read-View%E5%8F%AF%E8%A7%81%E6%80%A7%E8%A7%84%E5%88%99"><span class="toc-text">Read View可见性规则</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E9%87%8D%E5%A4%8D%E8%AF%BB%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="toc-text">可重复读实现原理</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="github" href="https://github.com/junkeWu">
+            <i class="iconfont icon-github"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="email" href="">
+            <i class="iconfont icon-envelope"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a href="https://github.com/junkeWu">Copyright © 2022 junkeWu</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a href="https://github.com/zchengsite/hexo-theme-oranges">Theme by zchengsite | Powered by Hexo</a>
+        
+    </div>
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + Mysql%20Mvcc%E5%8E%9F%E7%90%86 + '&url=' + http%3A%2F%2Fgithub.com%2F2022%2F08%2F08%2Fmysql-mvcc%25E5%258E%259F%25E7%2590%2586%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/2022/08/08/mysql-mvcc%E5%8E%9F%E7%90%86/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
