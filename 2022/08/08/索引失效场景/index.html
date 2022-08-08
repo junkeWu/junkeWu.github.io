@@ -221,7 +221,7 @@ MathJax = {
 <li><p>or 和存在索引的列就可以走索引。</p>
 </li>
 </ul>
-<h3 id="如果字段类型是字符串，where时一定用引号括起来，否则索引失效"><a href="#如果字段类型是字符串，where时一定用引号括起来，否则索引失效" class="headerlink" title="如果字段类型是字符串，where时一定用引号括起来，否则索引失效"></a>如果字段类型是字符串，where时一定用引号括起来，否则索引失效</h3><p>![image-20220808113405928](..&#x2F;..&#x2F;..&#x2F;..&#x2F;..&#x2F;..&#x2F;..&#x2F;Library&#x2F;Application Support&#x2F;typora-user-images&#x2F;image-20220808113405928.png)</p>
+<h3 id="如果字段类型是字符串，where时一定用引号括起来，否则索引失效"><a href="#如果字段类型是字符串，where时一定用引号括起来，否则索引失效" class="headerlink" title="如果字段类型是字符串，where时一定用引号括起来，否则索引失效"></a>如果字段类型是字符串，where时一定用引号括起来，否则索引失效</h3><p>​	<img src="/../images/index.png" alt="index"></p>
 <p><strong>分析与结论：</strong></p>
 <p><strong>为什么第一条语句未加单引号就不走索引了呢？</strong>这是因为不加单引号时，是字符串跟数字的比较，它们类型不匹配，MySQL会做<strong>隐式的类型转换</strong>，把它们转换为浮点数再做比较。</p>
 <h3 id="like通配符可能导致索引失效。"><a href="#like通配符可能导致索引失效。" class="headerlink" title="like通配符可能导致索引失效。"></a>like通配符可能导致索引失效。</h3><p><strong>在emp2表中，当%在前面不走索引，%在后面的话走索引。</strong></p>
