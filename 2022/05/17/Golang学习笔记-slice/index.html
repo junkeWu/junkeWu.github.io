@@ -212,19 +212,20 @@ MathJax = {
 <li>sync.atomic</li>
 <li>channel</li>
 </ul>
-<h3 id="deep-copy"><a href="#deep-copy" class="headerlink" title="deep copy"></a>deep copy</h3><p>拷贝数据本身，创建一个新对象，新创建的对象与原对象不共享内存，新创建的对象在内存中开辟一个新的内存地址，新对象值修改时不会影响原对象值。</p>
+<h3 id="deep-copy"><a href="#deep-copy" class="headerlink" title="deep copy"></a>deep copy</h3><p>slice本身是浅拷贝，拷贝的是指针的值。但是可以用copy的方式实现深拷贝。</p>
+<p>拷贝数据本身，创建一个新对象，新创建的对象与原对象不共享内存，新创建的对象在内存中开辟一个新的内存地址，新对象值修改时不会影响原对象值。</p>
 <p><code>copy(slice2, slice1)</code></p>
 <h3 id="切片注意事项"><a href="#切片注意事项" class="headerlink" title="切片注意事项"></a>切片注意事项</h3><ul>
 <li>定义空切片，没有指向底层数组</li>
 <li>超出底层数组范围 </li>
 <li>切片动态增长</li>
-<li>切片作为参数传递时，是值传递，但是在参数内进行append参数或者切片修改时，改到的是底层数组的值。</li>
+<li>切片作为参数传递时，是值传递，传的是指针的值，在参数内进行append参数或者切片修改时，改到的是底层数组的值，在没有扩容时，原有底层数组会被更改。</li>
 <li>切片本身是引用类型</li>
 </ul>
-<h3 id="题目思考"><a href="#题目思考" class="headerlink" title="题目思考"></a>题目思考</h3><p><code>slice01 :=  []&#123;1, 2, 3&#125;</code></p>
-<p><code>slice02 := append(slice02, []int&#123;4,5,6,7&#125;...)</code></p>
+<h3 id="题目思考"><a href="#题目思考" class="headerlink" title="题目思考"></a>题目思考</h3><p><code>slice01 :=  []int&#123;1, 2, 3&#125;</code></p>
+<p><code>slice02 := append(slice01, []int&#123;4,5,6,7&#125;...)</code></p>
 <p> 问：len 和 cap append 后是多少</p>
-<p>答：在64位机器中，int占8个字节，所以append之后len&#x3D;7，预估有7 * 8 &#x3D; 56字节的大小需要分配，即64字节，所以新的slice的cap &#x3D; 64 &#x2F; 8。</p>
+<p>答：在64位机器中，int占8个字节，所以append之后len&#x3D;7，预估有7 * 8 &#x3D; 56字节的大小需要分配，即需64字节，所以新的slice的cap &#x3D; 64 &#x2F; 8。</p>
 
       </div>
       
