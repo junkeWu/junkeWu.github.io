@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="keywords" content="" />
+  <meta name="author" content="Junke Wu" />
+  <meta name="description" content="坚持持续学习..." />
+  
+  
+  <title>
+    
+      defer 
+      
+      
+      |
+    
+     主页
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="icon" href="/images/favicon.png">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  
+<link rel="stylesheet" href="/css/color-scheme.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+<link rel="stylesheet" href="/css/comments.css">
+
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+  <!-- fancybox -->
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <script async src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+
+  <!-- clipboard -->
+  
+    <script src="https://unpkg.com/clipboard@2/dist/clipboard.min.js"></script>
+    
+<script src="/js/codeCopy.js"></script>
+
+  
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.png" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">junke Wu</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">defer</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-06-01 20:55:32
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags" title="Tags"></i>
+                
+                <span class="span--tag">
+                  <a href="/tags/golang/" title="golang">
+                    <b>#</b> golang
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h2 id="GO1-12"><a href="#GO1-12" class="headerlink" title="GO1.12"></a>GO1.12</h2><p>关于defer，我们知道它会在函数返回之前倒叙执行，像这样的代码，编译后的伪指令是这样的。</p>
+<p><img src="/../images/defer01.png"></p>
+<p>defer指令对应到两部分内容，deferproc负责把要执行的函数保存起来，我们称之为defer注册，deferproc函数会返回0，和panic recover有关，先忽略，对应要跳转的也先忽略。defer注册完成后程序会继续执行后面的逻辑，直到返回之前通过deferreturn执行注册的defer函数。正是因为先注册后调用，才实现了defer延迟执行的效果。<br><img src="/../images/defer03.png"></p>
+<p>defer信息会注册到一个链表，而当前执行的goroutine持有这个链表的头指针，每个goroutine在运行时都有一个对应的结构体g，其中有一个字段指向defer链表头，defer链表，链起来的是一个个_defer结构体,新注册的defer会添加到链表头，执行时也是从头开始，所以defer才会表现为倒序执行。</p>
+<p><img src="/../images/defer04.png"></p>
+<p>这里函数A注册了一个defer函数A1，A的栈帧首先是两个局部变量，然后就要注册defer函数A1了。deferproc函数原型只有两个参数，第一个是defer函数A1的参数加返回值共占用多大空间，A1没有返回值，只有一个int参数，所以第一个参数为8，第二个参数是一个function value，没有捕获列表的function value 在编译阶段会做出优化，就是在只读数据段分配一个共用的funcval结构体，所以deferproc的第二个参数就是它的地址。</p>
+<p><img src="/../images/defer05.png"></p>
+<p>我们先把_defer结构体展开来看一下，siz记录defer参数与返回值共占多少字节，这段空间会直接分配在_defer结构体后面，用于在注册时保存参数，并在执行时拷贝到调用者参数与返回值空间。</p>
+<p><img src="/../images/defer06.png"></p>
+<p>deferproc函数调用时，编译器会在它自己的两个参数后面，开辟一段空间，用于存放dfefer函数的返回值和参数，这一段空间会被直接拷贝到_defer结构体的后面。<br>deferproc函数执行时，需要堆分配一段空间，用于存放_defer结构体，以及后面siz大小的参数与返回值，然后这个结构体就被添加到defer链表头，deferproc注册结束<br><img src="/../images/defer07.png"></p>
+<p>实际上go语言会预分配不同规格的defer池，执行时从空闲_defer中取一个来用，没有空闲或者没有大小合适的再进行堆分配，用完以后再放回空闲_defer池，这样可以避免频繁的堆分配和回收</p>
+<p><img src="/../images/defer10.png"></p>
+<p>等到deferreturn执行defer链表，从当前goroutine拿到链表头上的这个_defer结构体，通过fn找到funcval，拿到函数入口地址，调用A1时会把_defer后面的参数与返回值，整个拷贝到A1的调用者栈上，然后A1开始执行。这里的关键是defer函数的参数，再注册时拷贝到堆上，执行时又拷贝到栈上。<br><img src="/../images/defer11.png"></p>
+<p>既然deferproc注册的是一个function value，那就来看看有捕获列表时是什么情况，这个例子中defer函数不止要传递局部变量b做参数，还捕获了外层函数的局部变量a，形成闭包。</p>
+<p><img src="/../images/defer13.png"></p>
+<p>deferproc执行时，defer结构体中的fn，保存的就是这个funcval结构体的起始地址，除此之外还要拷贝参数b的值到后面，然后把这个defer结构体添加到defer链表头。deferproc结束。</p>
+<p><img src="/../images/defer14.png"></p>
+<p>执行到deferreturn时，从defer链表头拿到这个defer结构体。执行注册的defer函数时，把参数b拷贝到栈上的参数空间。这里最关键的是分清defer传参与闭包捕获变量的实现机制。</p>
+<p><img src="/../images/defer15.png"></p>
+<p>现在就能解释形如defer A(B(a))这样的问题了。这里defer注册的函数是A，defer链表存储的也是A的funcval指针。因为注册时需要保存A的参数，就要拿到B的返回值，所以B(a)会在defer注册时执行。注册时a&#x3D;1，defer注册保存的参数值就是2，所以defer执行时函数A会输出3。<br><img src="/../images/defer16.png"></p>
+<p>最后来看一个defer嵌套的例子，这一个抛开所有细节。只看defer链表随着A的执行会怎样变化，首先函数A注册两个defer，到A返回前执行deferreturn时，会判断defer链表头上的defer是不是A注册的，方法就是判断defer结构体记录的sp是否等于A的栈指针。</p>
+<p><img src="/../images/defer18.png"></p>
+<p>保存函数调用的相关信息后，把它从defer链表中移除，然后执行函数A2，又注册两个defer，A2返回前，同样去执行defer链表，同样判断是否是自己注册的defer函数，然后B2执行，同样的流程B1执行。</p>
+<p><img src="/../images/defer19.png"></p>
+<p>此时A2仍然不知道自己注册的defer已经执行完了，直到下一个_defer.SP不等于自己的栈指针，然后A2就可以结束了。</p>
+<p><img src="/../images/defer20.png"></p>
+<p>再次回到A的defer执行流程，执行A1，A1结束后defer链表为空，函数A结束。这里的关键是了解defer链表注册时添加链表项，执行时移除链表项的用法</p>
+<h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><p>Go1.12版本的defer基本设计思路就算梳理完了，这一版本的defer比较明显的问题就是慢。<br>第一个原因是_defer结构体堆分配，即使又预分配的deferpool，也需要去堆上获取与释放，而且参数还要再堆栈上来回拷贝。<br>第二个原因是使用链表注册defer信息，而链表本身操作比较慢。所以Go1.13和1.14中分别做了不同的优化。</p>
+<h2 id="GO1-13"><a href="#GO1-13" class="headerlink" title="GO1.13"></a>GO1.13</h2><p><img src="/../images/defer21.png"></p>
+<p>在一个函数A中，有一个函数B，不同版本编译后的伪指令是这样的。</p>
+<p>我们暂且只关注正常执行流程，所以先忽略掉这些和panic，recover相关的部分下面就来看看1.13做出了怎样的优化。</p>
+<p><img src="/../images/defer22.png"></p>
+<p>1.12中通过deferproc注册defer函数信息，_defer结构体分配在堆上，在1.13中，通过在编译阶段，增加这样的局部变量,把defer信息保存到当前函数栈的局部变量区域，再通过deferprocstack把栈上这个_defer结构体注册到defer链表中。</p>
+<p><img src="/../images/defer23.png"></p>
+<p>defer1.13的优化点，主要在减少defer信息的堆分配。之所以说减少，是因为像第一种显示循环或者这样的隐式循环中的defer，依然需要使用1.12版本的处理方式，在堆上分配。</p>
+<p><img src="/../images/defer25.png"></p>
+<p>为此_defer结构体中增加了一个字段，用于表示是否为堆分配。所以这里的局部变量d，64位下参数加返回值共占8字节。heap为false，其他与1.12相同。到defer执行时，依然是通过deferreturn实现的。也同要在defer函数执行时拷贝参数，不过不是在堆栈之间，而是从栈上的局部变量空间，拷贝到参数空间。</p>
+<p>1.13的defer，官方提供的性能提升是30%</p>
+<h2 id="GO1-14"><a href="#GO1-14" class="headerlink" title="GO1.14"></a>GO1.14</h2><p><img src="/../images/defer41.png"></p>
+<p>1.14版本，有什么不一样的优化策略呢？这一次一部分一部分的看。这里是函数A编译后的伪指令，我们略去一部分recover相关的内容。函数A有两个defer，我们先看deferA1,这里把函数A1需要的参数定义为局部变量，然后在函数返回前直接调用defer函数A1，用这样的方式，省去了构造defer链表项，并注册到链表的过程，也同样实现了defer函数延迟执行的效果。<br><img src="/../images/defer42.png"></p>
+<p>不过A2就不能这样简单处理了，它要到执行阶段才能确定是否需要被调用。Go语言用一个表示变量df来解决这个问题 。df里每一位对应标识一个defer函数时是否要被执行。例如这里第一个对应defer函数A1，A1需要执行所以通过或运算把df第一位置为1，defer函数调用这里，也要修改一个，先判断defer标识为是否是1，执行前，还要把df对应标识位置为0.避免重复执行。然后直接调用A1就好 。<br><img src="/../images/defer43.png"></p>
+<p>样的方式到defer A2这里，到程序执行阶段，就会根据具体条件判断df第二个标识位是否要被置为1，对应的函数返回前也要根据第二个标识位来决定是否要调用函数A2。</p>
+<p><img src="/../images/defer45.png"></p>
+<p>Go1.14的defer就是通过在编译阶段插入代码，把defer函数执行逻辑展开在所属函数内。从而免于创建_defer结构体，而且不需要注册到defer链表。Go语言称这种方式为open coded defer</p>
+<p>但是同1.13一样，它依然不适用与循环中的defer，所以在这两个版本中，1.12版本的处理方式是一直保留的。通过性能测试三个版本的表现如上，1.14版本的性能几乎提升了一个数量级。</p>
+<p><img src="/../images/defer46.png"></p>
+<p>但是这并非没有代价，我们一直在梳理的，都是程序正常执行的流程，如果发生panic或者调用runtime.Goexit()函数， 后面这些代码根本执行不到，就要去执行defer链表了</p>
+<p><img src="/../images/defer47.png"></p>
+<p>而这些open coded方式实现的defer，并没有注册到链表，需要额外通过栈扫描的方式来发现，所以1.14版本中的_defer结构体，在1.13版本的基础上，又增加了几个字段，借助这些信息，可以找到未注册到链表的defer函数。并按照正确的顺序执行 。<br>所以实际上1.14版本中，defer的确变快了，但panic变得更慢了，但是Go语言做出这样的优化，一定是综合考量了整体性能，毕竟panic发生的几率要比defer低。</p>
+<h2 id="defer总结"><a href="#defer总结" class="headerlink" title="defer总结"></a>defer总结</h2><h3 id="Go1-12"><a href="#Go1-12" class="headerlink" title="Go1.12"></a>Go1.12</h3><p>编译后的伪指令<br>defer指令对应到两部分内容</p>
+<p>deferproc负责把要执行的函数保存起来，我们称之为defer注册。<br>返回之前通过deferreturn执行注册的defer函数。<br>注册defer会创建一个_defer结构体,并且头插到runtime.g._defer链表中<br>_defer结构体是在堆中，在执行时参数变量需要在堆栈直接拷贝<br>deferreturn执行时依次执行runtime.g._defer链表每一项</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">// runtime/runtime2.go</span><br><span class="line">type g struct &#123;</span><br><span class="line">	...</span><br><span class="line">	_defer       *_defer // defer 链表</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="deferproc"><a href="#deferproc" class="headerlink" title="deferproc"></a>deferproc</h4><ol>
+<li>从defer pool预分配不同规格的defer，不满足时再创建，用完再放回池中。</li>
+<li>进行堆分配_defer结构体，将参数拷贝到堆上</li>
+<li>将该结构体头插到runtime.g._defer链表中</li>
+</ol>
+<h4 id="deferreturn"><a href="#deferreturn" class="headerlink" title="deferreturn"></a>deferreturn</h4><p>执行defer注册的funcval，将堆上的参数拷贝到栈上进行执行。<br>如果执行的是闭包，堆上分配捕获变量的地址，执行时通过指针加偏移量找到被捕获的变量进行执行<br>形如defer A(B(a))的情况，函数A需要依赖B的返回值进行堆分配内存大小，所以注册defer的时候直接会执行B(a)</p>
+<h4 id="存在的问题"><a href="#存在的问题" class="headerlink" title="存在的问题"></a>存在的问题</h4><ol>
+<li>defer结构体堆分配，参数需要进行堆栈间拷贝。 GC</li>
+<li>链表注册defer信息，执行比较慢。</li>
+</ol>
+<h4 id="Go1-13"><a href="#Go1-13" class="headerlink" title="Go1.13"></a>Go1.13</h4><p>性能提升：30%</p>
+<p>runtime.deferprocStack<br>编译阶段：<strong>将defer的参数分配到栈帧的局部变量部分。</strong><br><strong>defer结构体分配到栈上</strong>，通过<strong>deferprocStack</strong>注册到defer链表中，以减少defer的堆分配<br>但是对于循环defer或隐式循环注册还是需要进行堆分配<br>defer结构体中加入heap字段区分是否为堆分配<br>runtime.deferreturn<br>defer函数执行时拷贝参数，不过不是在堆栈之间，而是从栈上的局部变量空间，拷贝到参数空间。<br>分配到堆上的defer1.12还是进行参数的堆栈间拷贝</p>
+<h4 id="Go1-14"><a href="#Go1-14" class="headerlink" title="Go1.14"></a>Go1.14</h4><p>性能提升一个数量级</p>
+<p>普通的 defer A(a,b) 会进行分配局部变量a,b，并在函数最后执行<br>对于带有条件的defer A2() 函数，需要到执行期间才知道是否需要执行<br>目标就是通过编译是插入代码，将defer在函数内进行展开执行，就不用defer结构体测创建和注册defer链表</p>
+<p>引入<code>df</code>变量进行标记df的每一个bit是0或1，来进行决定defer是否需要执行<br>执行过了标记为0，避免重复执行。</p>
+<p>但是不适用于循环defer和隐式注册，所以go1.12还是进行保留。</p>
+<p>panic()和runtime.GoExit() 退出需要执行defer链表，但是由于没注册链表，所以需要栈扫描的方式来找到未注册defer函数。所以panic更慢了。但是这样做是因为 整体性能优化 &gt; panic发生的概率。</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/05/25/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-06-01 20:55:32
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags" title="Tags"></i>
+                    
+                    <span class="span--tag">
+                      <a href="/tags/golang/" title="golang">
+                        <b>#</b> golang
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2022/06/01/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-io.copy/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#GO1-12"><span class="toc-text">GO1.12</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E6%9E%90"><span class="toc-text">分析</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GO1-13"><span class="toc-text">GO1.13</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GO1-14"><span class="toc-text">GO1.14</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#defer%E6%80%BB%E7%BB%93"><span class="toc-text">defer总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Go1-12"><span class="toc-text">Go1.12</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#deferproc"><span class="toc-text">deferproc</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#deferreturn"><span class="toc-text">deferreturn</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%98%E5%9C%A8%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-text">存在的问题</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Go1-13"><span class="toc-text">Go1.13</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Go1-14"><span class="toc-text">Go1.14</span></a></li></ol></li></ol></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="github" href="https://github.com/junkeWu">
+            <i class="iconfont icon-github"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="email" href="">
+            <i class="iconfont icon-envelope"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a href="https://github.com/junkeWu">Copyright © 2022 junkeWu</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a href="https://github.com/zchengsite/hexo-theme-oranges">Theme by zchengsite | Powered by Hexo</a>
+        
+    </div>
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + defer + '&url=' + http%3A%2F%2Fgithub.com%2F2022%2F06%2F01%2FGolang%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-defer%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/2022/06/01/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-defer/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
