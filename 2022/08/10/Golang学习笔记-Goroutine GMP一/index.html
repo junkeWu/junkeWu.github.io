@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="keywords" content="" />
+  <meta name="author" content="Junke Wu" />
+  <meta name="description" content="坚持持续学习..." />
+  
+  
+  <title>
+    
+      GPM模型一 
+      
+      
+      |
+    
+     主页
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="icon" href="/images/favicon.png">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  
+<link rel="stylesheet" href="/css/color-scheme.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+<link rel="stylesheet" href="/css/comments.css">
+
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+  <!-- fancybox -->
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <script async src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+
+  <!-- clipboard -->
+  
+    <script src="https://unpkg.com/clipboard@2/dist/clipboard.min.js"></script>
+    
+<script src="/js/codeCopy.js"></script>
+
+  
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.png" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">junke Wu</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">GPM模型一</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-08-10 21:07:56
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags" title="Tags"></i>
+                
+                <span class="span--tag">
+                  <a href="/tags/golang/" title="golang">
+                    <b>#</b> golang
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h2 id="概念理解"><a href="#概念理解" class="headerlink" title="概念理解"></a>概念理解</h2><p>G:goroutine 协程<br>P:processor 处理器<br>M:thread 内核线程</p>
+<p><img src="/../images/gpm01.png"></p>
+<p>从上图中，一个main包下的main函数执行逻辑为：</p>
+<ul>
+<li>编译后成为一个可执行文件。</li>
+<li>执行时，可执行文件被加载到内存。对于进程虚拟地址空间中的代码段，程序执行入口，它并不是我们熟悉的main.main，而且不同平台下程序执行入口是不同的。</li>
+<li></li>
+</ul>
+<p><img src="/../images/gpm02.png" alt="gpm02"></p>
+<p>在进行一系列检查与初始化等准备工作后，会以runtime.main为执行入口，创建main goroutine。main goroutine执行起来以后，才会调用我们编写的main.main。</p>
+<p>再来看数据段，这里有几个重要的全局变量不得不提。</p>
+<ul>
+<li><p>协程对应的数据结构是runtime.g。</p>
+</li>
+<li><p>工作线程对应的数据结构是runtime.m。</p>
+</li>
+<li><p>全局变量g0就是主协程对应的g，与其它协程有所不同，g0的协程栈是在主线程栈上分配的。全局变量m0就是主线程对应的m，g0持有m0的指针，m0里也记录着g0的指针，而且一开始m0上执行的协程正是g0，m0和g0就这样联系了起来。全局变量allgs记录所有的g，allm记录所有的m。</p>
+</li>
+<li><p>M0</p>
+<p>1、启动程序后的编号为0的主线程(当前启动一个进程时，进程中会包含一个线程，进程中的第一个线程的编号设置为M0)</p>
+<p>如果进程中不开任何线程，可以理解为一个进程就是一个线程。</p>
+<p>2、在全局变量runtime.M0中，不需要在heap(堆)上分配。(M0在整个进程中是唯一的，无需在堆上分配)</p>
+<p>3、负责执行初始化操作和启动第一个G(M0是负责启动第一个G的，go语言是跑在协程上)</p>
+<p>4、启动第一个G之后，M0就和其他的M一样了(负责给其他M进行抢占)</p>
+<p>G0</p>
+<p>1、每次启动一个M，都会第一个创建的goroutine，就是G0(G0不是整个进程唯一的，而是一个线程中唯一的)</p>
+<p>2、G0仅用于负责调度其他的G(M可能会有很多的G，然后G0用来保持调度栈的信息)</p>
+<p>当一个M从G1切换到G2，首先应该切换到G0，通过G0把G1干掉，把G2加进来，可以理解G0是一个转换的桥梁</p>
+<p>3、G0不指向任何可执行的函数</p>
+<p>4、每一个M都会有一个自己的G0</p>
+<p>5、在调度或系统调用是会使用M会切换到G0。来进行调度其他的G。</p>
+<p>6、M0的G0会放在全局空间 </p>
+<p>创建一个M就会有一个G0，创建其他的M也会有其他的G0</p>
+</li>
+</ul>
+<p><img src="/../images/gpm03.png" alt="gpm03"></p>
+<p>最初Go语言的调度模型里只有M和G。所以待执行的G排排做，等在一个地方，每个M来这里获取一个G时都要加锁，多个M分担这多个G的执行任务，就会因频繁加锁解锁而发生等待，影响程序并发性能。</p>
+<p><img src="/../images/gpm04.png" alt="gpm04"></p>
+<p>所以后来在M和G以外又引入了P，P对应的数据结构是runtime.p,它有一个本地runq，这样只要把一个P关联到一个M上，这个M就可以从P这里直接获取待执行的G，不用每次都和众多M从一个全局队列中争抢任务了。也就说是，虽然P有一个本地runq，但是依然有个全局runq。</p>
+<p><img src="/../images/gpm05.png" alt="gpm05"></p>
+<p>全局runq保存在全局变量sched中，这个全局变量代表的是调度器，对应的数据结构是runtime.schedt,这里记录着所有空闲的m,空闲的p等等许多和调度相关的内容，其中就有一个全局的runq。</p>
+<p><img src="/../images/gpm06.png" alt="gpm06"></p>
+<p>如果P的本地队列已满，那么等待执行的G就会被放到这个全局队列里，而M会先从关联P持有的本地runq中获取待执行的G，没有的话，再到调度器持有的全局队列里取，如果全局队列没有了，就会去别的P那里“偷”一些G过来。</p>
+<p><img src="/../images/gmp07.png" alt="gpm07"></p>
+<p><img src="/../images/gmp08.png" alt="gpm08"></p>
+<p>在程序初始化过程中会进行调度器初始化，这时会按照GOMAXPROCS这个环境变量，决定创建多少个P，保存在全局变量allp中，并且把第一个P(allp[0])与m0关联起来，简单来说，G，M，P就是这样的合作关系。现在就可以更清晰的理解这个经典的示意图了。</p>
+<p><img src="/../images/gmp09.png" alt="gpm09"></p>
+<p>在main goroutine创建之前，GPM的情况是这样的，main goroutine创建之后，新的G被加入到当前P的本地队列中。</p>
+<p><img src="/../images/gmp10.png" alt="gpm10"></p>
+<p>然后通过mstart函数开启调度循环，这个mstart函数，是所有工作线程的入口，主要就是调用schedule函数，也就是执行调度循环，其实对于一个活跃的m而言，不是在执行某个G，就是在执行调度程序获取某个G，我们暂且不展开循环调度的具体逻辑，目前面临的调度场景很简单，队列里只有main goroutine等待执行。<br><img src="/../images/gmp11.png" alt="gpm11"></p>
+<p>所以m0切换到main goroutine，执行入口自然是runtime.main,它会做很多事，包括创建监控线程，进行包初始化等等，其中也包括调用我们熟悉的main.main函数，终于可以输出“Hello World!”了。值得一提的是，在main.main返回之后，runtime.main会调用exit()函数结束进程。</p>
+<p>接下来我们把这个hello world程序改造一下，如果在main.main中不直接输出，而是通过一个协程输出，那么到main.main被调用执行时，就会创建一个新的goroutine，我们把它记为“hello goroutine”。</p>
+<p><img src="/../images/gmp12.png" alt="gpm12"></p>
+<p>我们通过go关键字创建协程，会被编译器转换为newproc函数调用，main goroutine也是由newproc函数创建的。</p>
+<p><img src="/../images/gmp13.png" alt="gpm13"></p>
+<p>创建goroutine时我们只负责指定入口，参数，而newproc会给goroutine构造一个栈帧，目的是让协程任务结束后，返回到goexit函数中，进行协程资源回收处理等工作，这很合理，一个协程任务完成后，是放到空闲G队列里备用，还是该释放，总要有个出路。</p>
+<p><img src="/../images/gmp14.png" alt="gpm14"></p>
+<p>回到newproc，如果我们设置GOMAXPROCS&#x3D;1，那么就只会创建一个P。那么新创建的hello goroutine会被添加到当前P的本地runq队列中，然后main.main就结束返回了，再然后exit函数被调用，进程就结束了，然后。。就没有然后了，所以hello groutine它没能执行，问题就在于main.main返回后exit函数就会被调用，直接把进程结束掉，没给hello goroutine空出调度执行的时间，所以想让hello goroutine执行，就要在main.main返回之前拖延下时间。</p>
+<p>如果使用time.Sleep,实际上会调用gopark函数，把当前协程的状态从_Grunning修改为_Gwaiting。然后main goroutine不会返回到当前P的runq中，而是在timer中等待，继而调用schedule()进行调度，hello goroutine得以执行。<br><img src="/../images/gmp21.png" alt="gpm21"></p>
+<p>等到sleep的时间到达后，timer会把main goroutine重新置为_Grunnable状态，放回到runq中。再然后，main gorouting被m0执行，main.main结束，exit得以调用，进程退出。</p>
+<p><img src="/../images/gmp22.png" alt="gpm22"></p>
+<p>这是只有一个P的情况，如果创建了多个P，hello gorouine创建之后，虽然默认会添加到当前P的本地队列中，但是只有空闲P的情况下，就可以启动新的线程关联到这个空闲的P。并把hello goroutine放到它的本地队列中了。</p>
+<p>同样的，可以使用time.Sleep,或者是等待一个Channel，或者是WaitGroup,反正只要main.main不马上返回，hello goroutine就有时间得以执行了。</p>
+<p><img src="/../images/gmp23.png" alt="gpm23"></p>
+<p>同样的，可以使用time.Sleep,或者是等待一个Channel，或者是WaitGroup,反正只要main.main不马上返回，hello goroutine就有时间得以执行了。</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/08/10/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-Goroutine%20GMP%E4%BA%8C/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-08-10 21:07:56
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags" title="Tags"></i>
+                    
+                    <span class="span--tag">
+                      <a href="/tags/golang/" title="golang">
+                        <b>#</b> golang
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2022/08/17/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-GC/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A6%82%E5%BF%B5%E7%90%86%E8%A7%A3"><span class="toc-text">概念理解</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="github" href="https://github.com/junkeWu">
+            <i class="iconfont icon-github"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="email" href="">
+            <i class="iconfont icon-envelope"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a href="https://github.com/junkeWu">Copyright © 2022 junkeWu</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a href="https://github.com/zchengsite/hexo-theme-oranges">Theme by zchengsite | Powered by Hexo</a>
+        
+    </div>
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + GPM%E6%A8%A1%E5%9E%8B%E4%B8%80 + '&url=' + http%3A%2F%2Fgithub.com%2F2022%2F08%2F10%2FGolang%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-Goroutine%2520GMP%25E4%25B8%2580%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/2022/08/10/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-Goroutine%20GMP%E4%B8%80/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

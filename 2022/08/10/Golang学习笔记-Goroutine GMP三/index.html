@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="keywords" content="" />
+  <meta name="author" content="Junke Wu" />
+  <meta name="description" content="坚持持续学习..." />
+  
+  
+  <title>
+    
+      GMP模型三 
+      
+      
+      |
+    
+     主页
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="icon" href="/images/favicon.png">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  
+<link rel="stylesheet" href="/css/color-scheme.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+<link rel="stylesheet" href="/css/comments.css">
+
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+  <!-- fancybox -->
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <script async src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+
+  <!-- clipboard -->
+  
+    <script src="https://unpkg.com/clipboard@2/dist/clipboard.min.js"></script>
+    
+<script src="/js/codeCopy.js"></script>
+
+  
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.png" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">junke Wu</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">GMP模型三</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-08-10 21:07:56
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags" title="Tags"></i>
+                
+                <span class="span--tag">
+                  <a href="/tags/golang/" title="golang">
+                    <b>#</b> golang
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p><strong>Goroutine协程让出、抢占、监控和调度</strong></p>
+<h2 id="理解"><a href="#理解" class="headerlink" title="理解"></a>理解</h2><p><img src="/../images/gc401.png" alt="gpm04"></p>
+<p>我们已经知道，协程执行time.Sleep时，状态会从_Grunning变为_Gwaiting ,并进入到对应timer中等待，而timer中持有一个<strong>回调</strong>函数，在指定时间到达后调用这个回调函数，把等在这里的协程恢复到_Grunnable状态，并放回到runq中。</p>
+<p><img src="/../images/gc402.png" alt="gpm04"></p>
+<p>那谁负责在定时器时间到达时，触发定时器注册的回调函数呢？其实每个P都持有一个最小堆，存储在P.timers中，用于管理自己的timer，堆顶timer就是接下来要触发的那一个。</p>
+<p><img src="/../images/gc404.png" alt="gc404"></p>
+<p>而每次调度时，都会调用checkTimers函数，检查并执行已经到时间的那些timer，不过这还不够稳妥，万一所有M都在忙，不能及时触发调度的话，可能会导致timer执行时间发生较大的偏差。</p>
+<p><img src="/../images/gc405.png" alt="gc405"></p>
+<p>所以还会通过<strong>监控线程来增加一层保障</strong>，在介绍HelloGoroutine（GMP一）的执行过程时，我们提过监控线程是由<strong>main goroutine创建</strong>的，这个监控线程与GMP中的工作线程不同。并<strong>不需要依赖P</strong>，<strong>也不由GMP模型调度</strong>，它会重复执行一系列任务，只不过会视情况调整自己的休眠时间。其中一项任务便是保障timer正常执行，监控线程检测到接下来有timer要执行时，不仅会按需调整休眠时间，还会在空不出M时创建新的工作线程，以保障timer可以顺利执行。<br><img src="/../images/gc406.png" alt="gc406"></p>
+<p>当协程等待一个channel时，其状态也会从_Grunnig变成_Gwaiting，并进入到对应的channel的读队列或写队列中等待。</p>
+<p><img src="/../images/gc407.png" alt="gc407"></p>
+<p>如果协程需要等待IO事件，就也需要让出，以epoll为例，若IO事件尚未就绪，需要注册要等待的IO事件到监听队列中，而每个监听对象都可以关联一个event data。所以就在这里记录是哪个协程在等待，等到事件就绪时再把它恢复到runq中即可 。</p>
+<p><img src="/../images/gc408.png" alt="gc408"></p>
+<p>不过timer计时器有设置好的触发时间 ，等待的channel可读可写或关闭了，也自会通知到相关协程，而获取就绪的IO时间需要主动轮询，所以为了降低IO延迟，需要时不时的那么轮询一下，也就是执行netpoll。实际上监控线程，调度器，GC等工作过程中都会按需执行netpoll。</p>
+<p><img src="/../images/gc409.png" alt="gc409"></p>
+<p>全局变量sched中会记录上次netpoll执行的时间，监控线程检测到距离上次轮询已超过了10ms，就会再执行一次netpoll。</p>
+<p>上面说的无一例外，都是协程会主动让出的情况，那要是一个协程不会等待timer，channel或者IO事件，就不让出了吗？那必须不能啊，否则调度器岂不成了摆设？那怎么让那些不用等待的协程”让出“呢，这就是监控线程的另一个工作任务了，那就是本着公平调度的原则，对运行时间过长的G，实行”抢占“操作。<br><img src="/../images/gc500.png" alt="gc500"></p>
+<p>就是告诉那些运行时间超过特定阈值(10ms)的G，该让一让了，怎么知道运行时间过长了呢，P里面有一个schedtick字段，每当调度执行一个新的G，并且不继承上个G的时间片时，就会把它自增1，而这个p.sysmontick中，schedwhen记录的是上一次调度的时间，监控线程如果检测到p.sysmontick.schedtick与p.schedtick不相等,说明这个P又发生了新的调度，就会同步这里的调度次数，并更新这个调度时间。<br><img src="/../images/gc501.png" alt="gc501"></p>
+<p>那如果真的运行时间过长了，要怎么通知它让出呢？这就不得不提到栈增长了，除了对协程栈没什么消耗的函数调用，Go语言编译器都会在函数头部插入栈相关代码。实际上编译器插入的栈增长代码一共有三种。注意这里为什么是”&lt;&#x3D;“,栈是向下增长的，上面是高地址，下面是低地址.</p>
+<p><img src="/../images/gc502.png" alt="gc502"></p>
+<p>如果栈帧比较小，插入的代码就是这样的，这个SP表示当前协程栈使用到了什么位置，stackguard0是协程栈空间下界，所以当协程栈的消耗达到或超过这个位置时，就需要进行栈增长了。</p>
+<p><img src="/../images/gc503.png" alt="gc503"></p>
+<p>如果栈帧大小处在_StackSmall和_StackBig之间，插入的代码是这样的，也就是说，当前协程栈使用到这里，若再使用framesize这么多，超出stackguard0的部分大于_StackSmall了，就要进行栈增长了</p>
+<p><img src="/../images/gc504.png" alt="gc504"></p>
+<p>而对于栈帧大小超过_StackBig的函数，插入的代码就有所有不同了，判断是否要栈增长的方式，本质上同第二种情况相同，而我们要关注的，是这里的stackPreempt ，它是和协程调度相关的重要标识，当runtime希望某个协程让出CPU时，就会把它的stackguard0赋值为stackPreempt。这是一个非常大的值，真正的栈指针不可能指向这个位置，所以可以安全的用作特殊标识。<br><img src="/../images/gc505.png" alt="gc505"></p>
+<p>正因为stackPreempt这个值足够大，所以这两段代码种的判断结果也都会为true，进而跳转到morestack处。</p>
+<p><img src="/../images/gc506.png" alt="gc506"></p>
+<p>而morestack‘这里，最终会调用runtime.newstack函数，它负责栈增长工作，不过它在进行栈增长之前，会先判断stackguard0是否等于stackPreempt，等于的话就不进行栈增长了，而是执行一次协程调度。</p>
+<p><img src="/../images/gc507.png" alt="gc507"></p>
+<p>所以在协程不主动让出时，也可以设置stackPreempt标识，通知它让出。</p>
+<p><img src="/../images/gc508.png" alt="gc508"></p>
+<p>不过这种抢占方式的缺陷，就是过于依赖栈增长代码，如果来个空的for循环，因为与栈增长无关，监控线程等也无法通过设置stackPreempt标识来实现抢占，所以最终导致程序卡死。</p>
+<p><img src="/../images/gc509.png" alt="gc509"></p>
+<p> 这一问题在1.14版本中得到了解决，因为它实现了异步抢占，具体实现在不同平台种不尽相同。例如在Unix平台中，会向协程关联的M发送信号(sigPreempt),接下来目标线程会被信号中断，转去执行runtime.sighandler，在sighandler函数中检测到函数信号为sigPreempt后，就会调用runtime.doSigPreempt函数，它会向当前被打断的协程上下文中，注入一个异步抢占函数调用，处理完信号后sighandler返回，被中断的协程得以恢复，立刻执行被注入的异步抢占函数， 该函数最终会调用runtime中的调度逻辑，这不就让出了嘛。所以在1.14版本中，这段代码执行之前就不会卡死了。<br><img src="/../images/gc601.png" alt="gc601"></p>
+<p>而监控线程的抢占方式又多了一种，异步抢占，其实为了充分利用CPU，监控线程还会抢占处在系统调用中的P，因为一个协程要执行系统调用，就要切换到g0栈，在系统调用没执行完之前，这个M和这个G算是抱团了，不能被分开，也就用不到P，所以在陷入系统调用之前，当前M会让出P，解除m.p与当前p的强关联，只在m.oldp中记录这个p，P的数目毕竟有限，如果有其他协程在等待执行，那么放任P如此闲置就着实浪费了，还是把它关联到其他M继续工作比较划算，不过如果当前M从系统调用中恢复，会先检测之前的P是否被占用，没有的话就继续使用，否则就再去申请一个，没申请到的话，就把当前G放到全局runq中去，然后当前线程m就睡眠了。</p>
+<p><img src="/../images/gc602.png" alt="gc602"></p>
+<p>这里不是让出就是抢占。</p>
+<p><img src="/../images/gc603.png" alt="gc603"></p>
+<p>那让出了，抢占了之后，M也不能闲着，得找到下一个待执行的G来运行，这就是schedule()的职责了。schedul这里要给这个M找到一个待执行的G，首先要确定当前M是否和当前G绑定了，如果绑定了，那当前M就不能执行其他G，所以需要阻塞当前M，等到当前G再次得到调度执行时，自会把当前M唤醒。如果没有绑定，就先看看GC是不是在等待执行,全局变量sched这里，有一个gcwaiting标识，如果GC在等待执行，就去执行GC，回来再继续执行调度程序。接下来还会检查一下有没有要执行的timer。调度程序还有一定几率会去全局runq中获取一部分G到本地runq中。（1&#x2F;61的几率去全局队列拿）</p>
+<p><img src="/../images/gc604.png" alt="gc604"></p>
+<p><strong>而获取下一个待执行的G时，会先去本地runq中查找，没有的话，就调用findrunnable(),这个函数直到获取到待运行的G才会返回。在findrunnable()函数这里，也会判断是否要执行GC，然后先尝试从本地runq中获取，没有的话就从全局runq获取一部分，如果还没有，就先尝试执行netpoll，恢复那些IO事件已经就绪了的G，它们会被放回到全局runq中，然后才会尝试从其他P那里steal一些G 。</strong></p>
+<p><img src="/../images/gc606.png" alt="gc606"></p>
+<p>当调度程序终于获得一个待执行的G以后，还要看看人家有没有绑定的M，如果有的话还得乖乖的把G还给对应的M。而当前M就不得不再次进行调度了。如果没有绑定的M，就调用excute函数在当前M上执行这个G。excute函数这里会检查当前M和这个G的关联关系，并把G的状态从_Grunnable修改为_Grunning,如果不继承上一个执行中协程的时间片，就把P这里的调度计数加一，最后会调用gogo函数，从g.sched这里恢复协程栈指针，指令指针等，接着继续协程的执行。</p>
+<p><img src="/../images/gc607.png" alt="gc607"></p>
+<p><strong>之前介绍过，协程创建时，会伪装一个执行现场存到g.sched中，所以即使这个G初次执行，也是有一个完美的执行现场的。</strong></p>
+<p><img src="/../images/gc800.png" alt="gc800"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><strong>协程在某些情况下会主动让出</strong>，但有时<strong>也需要设置stackPreemt标识</strong>，或<strong>异步抢占的方式来通知它让出</strong>。也了解了<strong>调度程序如何获取待执行的G并把它运行起来</strong>。期间还穿插介绍了<strong>监控线程的主要工作任务”保障计时器正常工作</strong>，<strong>执行网络轮询，抢占长时间运行的，或处在系统调用的P</strong>“，这些都是为了保障程序健康高效的执行，其实<strong>监控线程还有一项任务，就是强制执行GC</strong>。</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/08/08/%E7%B4%A2%E5%BC%95%E5%A4%B1%E6%95%88%E5%9C%BA%E6%99%AF/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-08-10 21:07:56
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags" title="Tags"></i>
+                    
+                    <span class="span--tag">
+                      <a href="/tags/golang/" title="golang">
+                        <b>#</b> golang
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2022/08/10/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-Goroutine%20GMP%E4%BA%8C/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%90%86%E8%A7%A3"><span class="toc-text">理解</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="github" href="https://github.com/junkeWu">
+            <i class="iconfont icon-github"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="email" href="">
+            <i class="iconfont icon-envelope"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a href="https://github.com/junkeWu">Copyright © 2022 junkeWu</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a href="https://github.com/zchengsite/hexo-theme-oranges">Theme by zchengsite | Powered by Hexo</a>
+        
+    </div>
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + GMP%E6%A8%A1%E5%9E%8B%E4%B8%89 + '&url=' + http%3A%2F%2Fgithub.com%2F2022%2F08%2F10%2FGolang%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-Goroutine%2520GMP%25E4%25B8%2589%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/2022/08/10/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-Goroutine%20GMP%E4%B8%89/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

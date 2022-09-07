@@ -11,7 +11,7 @@
   
   <title>
     
-      GPM模型一 
+      GMP模型二 
       
       
       |
@@ -143,7 +143,7 @@ MathJax = {
   <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
   <div class="container post-details" id="post-details">
     <div class="post-content">
-      <div class="post-title">GPM模型一</div>
+      <div class="post-title">GMP模型二</div>
       <div class="post-attach">
         <span class="post-pubtime">
           <i class="iconfont icon-updatetime" title="Update time"></i>
@@ -163,52 +163,42 @@ MathJax = {
           
       </div>
       <div class="markdown-body">
-        <h2 id="概念理解"><a href="#概念理解" class="headerlink" title="概念理解"></a>概念理解</h2><p>G:goroutine 协程<br>P:processor 处理器<br>M:thread 内核线程</p>
-<p><img src="/../images/gpm01.png"></p>
-<p>从上图中，一个main包下的main函数执行逻辑为：</p>
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p><strong>Goroutine的创建、运行和恢复</strong></p>
+<h2 id="理解"><a href="#理解" class="headerlink" title="理解"></a>理解</h2><p><img src="/../images/gc201.png" alt="gpm04"></p>
+<p>还是这个hello goroutine的例子，只不过给协程入口增加了一个参数，我们已经知道main goroutine执行起来会创建一个hello goroutine，而创建的任务，就交由newproc函数来负责。</p>
+<img src="../images/gc202.png" alt="gpm04" style="zoom:50%;" />
+
+<p>我们通过函数栈帧看一下newproc函数的调用过程，main函数栈帧自然分配在main goroutine的协程栈中 ，还记得go语言函数栈帧布局吧，call指令入栈的返回地址之后 ，是调用者栈基，然后是局部变量区间，以及调用其他函数时，传递是返回值和参数的区间，main函数这里有一个局部变量name。接下来要调用newproc函数，从newproc函数签名来看，要接收两个参数，第一个是传递给协程入口函数的参数占多少字节，第二个是协程入口函数对应的funcval指针，所以在参数空间这里要入栈两个参数，先入栈fn，也就是协程入口函数hello对应的function val指针，再入栈参数大小，一个string类型的参数在64位的情况下占16字节，实际上者个要传递给协程入口函数的参数name，也会被放到第二个参数之后，所以要将局部变脸name拷贝到栈里（由右到左，实际上是第一个入栈的），这样就好像给newproc函数传递了三个参数一样。</p>
+<p><img src="/../images/gc203.png" alt="gpm04"></p>
+<p>而这下面就是Call指令入栈的返回地址，然后是调用者bp，而newproc函数这里主要做的就是<strong>切换到g0栈去调用newproc1函数</strong>，至于为什么要切换到g0栈，简单来说是因为g0的栈空间它大！因为runtime中很多函数都有<strong>no-split</strong>标记，<strong>意味着这个函数不支持栈增长</strong>，也就是说编译器不会在这个函数中插入栈增长相关的检测代码，协程栈本来就比线程栈小的多，这些个函数自己要消耗栈空间，却又不支持栈增长，那在普通协程上执行它们，万一栈溢出了就不好了，而g0的栈直接分配在线程栈上，栈空间足够大。所以直接切换到g0栈来执行这些函数，就不用担心栈溢出的问题了。</p>
+<p><img src="/../images/gc204.png" alt="gpm04"></p>
+<p>再来看它调用newproc1时，都传递了些什么参数，fn和siz不用多说，就是newproc自己接收的那两参数，这个argp赋值时，使用参数fn的地址加上一个指针大小，那就正好是参数name，所以argp用来定位到协程入口函数的参数，第四个参数是当前协程的指针，在这个例子中，newproc函数执行在main goroutine中，所以gp就是main goroutine的g指针，最后一个参数pc，在newproc函数中调用getcallerpc()，得到的是newproc函数调用结束后的返回地址，也就是return addr（由call指令入栈的那个返回地址）。</p>
+<p><img src="/../images/gc205.png" alt="gpm04"></p>
+<p>于newproc1而言，它的任务是创建一个协程，而目前已经知道新创建协程入口在哪里了 ，参数在哪，参数大小，父协程，以及创建完协程后要返回到哪去。</p>
 <ul>
-<li>编译后成为一个可执行文件。</li>
-<li>执行时，可执行文件被加载到内存。对于进程虚拟地址空间中的代码段，程序执行入口，它并不是我们熟悉的main.main，而且不同平台下程序执行入口是不同的。</li>
-<li>在进行一系列检查与初始化等准备工作后，会以runtime.main为执行入口，创建main goroutine。main goroutine执行起来以后，才会调用我们编写的main.main。</li>
+<li>newproc1首先通过acquirem禁止当前m被抢占，为什么呢？因为接下来要执行的程序中，可能会把当前p保存到局部变量中，若此时m被抢占，p关联到别的m，等到再次恢复时，继续使用这个局部变量里保存的p ，就会造成问题，所以为了保持数据一致性，会暂时<strong>禁止m被抢占</strong>。</li>
+<li>接下来会尝试获取一个空闲的G，如果当前p和调度器中都没有空闲的G，就创建一个，并添加到全局变量allgs中，我们依然把这个新创建的协程记为hello goroutine。此时它的状态是_Gdead,而且已然拥有自己的协程栈。</li>
+<li>如果协程入口函数有参数，就把参数移动到协程栈上，对hello goroutine而言，就要把参数name拷贝到hello goroutine stack上</li>
+<li>接下来会把goexit函数的地址加1，压入协程栈<br>再把hello goroutine对应的g这里，startpc置为协程入口函数起始地址(fn)，gopc置为父协程调用newproc后的返回地址，g.sched这个结构体用于保存现场，此时会把g.sched.sp置为协程栈指针，g.sched.pc指向协程入口函数的起始地址fn。</li>
 </ul>
-<p><img src="/../images/gpm02.png" alt="gpm02"></p>
-<p>再来看数据段，这里有几个重要的全局变量不得不提。我们知道Go语言中协程对应的数据结构是runtime.g，工作线程对应的数据结构是runtime.m。而全局变量g0就是主协程对应的g，与其它协程有所不同，g0的协程栈是在主线程栈上分配的。全局变量m0就是主线程对应的m，g0持有m0的指针，m0里也记录着g0的指针，而且一开始m0上执行的协程正是g0，m0和g0就这样联系了起来。全局变量allgs记录所有的g，allm记录所有的m。</p>
-<p><img src="/../images/gpm03.png" alt="gpm03"></p>
-<p>最初Go语言的调度模型里只有M和G。所以待执行的G排排做，等在一个地方，每个M来这里获取一个G时都要加锁，多个M分担这多个G的执行任务，就会因频繁加锁解锁而发生等待，影响程序并发性能。</p>
-<p><img src="/../images/gpm04.png" alt="gpm04"></p>
-<p>所以后来在M和G以外又引入了P，P对应的数据结构是runtime.p,它有一个本地runq，这样只要把一个P关联到一个M上，这个M就可以从P这里直接获取待执行的G，不用每次都和众多M从一个全局队列中争抢任务了。也就说是，虽然P有一个本地runq，但是依然有个全局runq。</p>
-<p><img src="/../images/gpm05.png" alt="gpm05"></p>
-<p>全局runq保存在全局变量sched中，这个全局变量代表的是调度器，对应的数据结构是runtime.schedt,这里记录着所有空闲的m,空闲的p等等许多和调度相关的内容，其中就有一个全局的runq。</p>
-<p><img src="/../images/gpm06.png" alt="gpm06"></p>
-<p>如果P的本地队列已满，那么等待执行的G就会被放到这个全局队列里，而M会先从关联P持有的本地runq中获取待执行的G，没有的话，再到调度器持有的全局队列里取，如果全局队列没有了，就会去别的P那里“偷”一些G过来。</p>
-<p><img src="/../images/gmp07.png" alt="gpm07"></p>
-<p><img src="/../images/gmp08.png" alt="gpm08"></p>
-<p>在程序初始化过程中会进行调度器初始化，这时会按照GOMAXPROCS这个环境变量，决定创建多少个P，保存在全局变量allp中，并且把第一个P(allp[0])与m0关联起来，简单来说，G，M，P就是这样的合作关系。现在就可以更清晰的理解这个经典的示意图了。</p>
-<p><img src="/../images/gmp09.png" alt="gpm09"></p>
-<p>在main goroutine创建之前，GPM的情况是这样的，main goroutine创建之后，新的G被加入到当前P的本地队列中。</p>
-<p><img src="/../images/gmp10.png" alt="gpm10"></p>
-<p>然后通过mstart函数开启调度循环，这个mstart函数，是所有工作线程的入口，主要就是调用schedule函数，也就是执行调度循环，其实对于一个活跃的m而言，不是在执行某个G，就是在执行调度程序获取某个G，我们暂且不展开循环调度的具体逻辑，目前面临的调度场景很简单，队列里只有main goroutine等待执行。<br><img src="/../images/gmp11.png" alt="gpm11"></p>
-<p>所以m0切换到main goroutine，执行入口自然是runtime.main,它会做很多事，包括创建监控线程，进行包初始化等等，其中也包括调用我们熟悉的main.main函数，终于可以输出“Hello World!”了。值得一提的是，在main.main返回之后，runtime.main会调用exit()函数结束进程。</p>
-<p>接下来我们把这个hello world程序改造一下，如果在main.main中不直接输出，而是通过一个协程输出，那么到main.main被调用执行时，就会创建一个新的goroutine，我们把它记为“hello goroutine”。</p>
-<p><img src="/../images/gmp12.png" alt="gpm12"></p>
-<p>我们通过go关键字创建协程，会被编译器转换为newproc函数调用，main goroutine也是由newproc函数创建的。</p>
-<p><img src="/../images/gmp13.png" alt="gpm13"></p>
-<p>创建goroutine时我们只负责指定入口，参数，而newproc会给goroutine构造一个栈帧，目的是让协程任务结束后，返回到goexit函数中，进行协程资源回收处理等工作，这很合理，一个协程任务完成后，是放到空闲G队列里备用，还是该释放，总要有个出路。</p>
-<p><img src="/../images/gmp14.png" alt="gpm14"></p>
-<p>回到newproc，如果我们设置GOMAXPROCS&#x3D;1，那么就只会创建一个P。那么新创建的hello goroutine会被添加到当前P的本地runq队列中，然后main.main就结束返回了，再然后exit函数被调用，进程就结束了，然后。。就没有然后了，所以hello groutine它没能执行，问题就在于main.main返回后exit函数就会被调用，直接把进程结束掉，没给hello goroutine空出调度执行的时间，所以想让hello goroutine执行，就要在main.main返回之前拖延下时间。</p>
-<p>如果使用time.Sleep,实际上会调用gopark函数，把当前协程的状态从_Grunning修改为_Gwaiting。然后main goroutine不会返回到当前P的runq中，而是在timer中等待，继而调用schedule()进行调度，hello goroutine得以执行。<br><img src="/../images/gmp21.png" alt="gpm21"></p>
-<p>等到sleep的时间到达后，timer会把main goroutine重新置为_Grunnable状态，放回到runq中。再然后，main gorouting被m0执行，main.main结束，exit得以调用，进程退出。</p>
-<p><img src="/../images/gmp22.png" alt="gpm22"></p>
-<p>这是只有一个P的情况，如果创建了多个P，hello gorouine创建之后，虽然默认会添加到当前P的本地队列中，但是只有空闲P的情况下，就可以启动新的线程关联到这个空闲的P。并把hello goroutine放到它的本地队列中了。</p>
-<p>同样的，可以使用time.Sleep,或者是等待一个Channel，或者是WaitGroup,反正只要main.main不马上返回，hello goroutine就有时间得以执行了。</p>
-<p><img src="/../images/gmp23.png" alt="gpm23"></p>
+<p><img src="/../images/gc206.png" alt="gpm04"></p>
+<p>现在我们来看hello goruotine的协程栈，name是参数，&amp;goexit+1是返回地址，下面是hello函数的栈帧。其实就“伪装”成了在goexit函数中调用了协程入口函数hello(name),并传递了用户传递的参数，而指令指针刚刚跳转到hello函数的入口处，却还没有开始执行时的状态，所以经这一通伪装，待到这个协程得到调度执行的时候，通过g.sched,就会从hello函数入口处开始执行了，而hello函数结束后便会返回到goexit函数中，执行协程资源回收等收尾工作。这样一来协程该如何出场，该如何收场，就都有了着落，甚是巧妙。</p>
+<p><img src="/../images/gc207.png" alt="gpm04"></p>
+<p>不过这还没完，newproc1还会给新建的goroutine赋予一个唯一id，给g.goid赋值前，会把协程的状态置为_Grunnable，这个状态意味着这个G可以进入到run queue里了，最后与一开始的acquirem相呼应，调用releasem允许当前m被抢占。所以接下来会调用runqput把这个G放到P的本地队列中。<br><img src="/../images/gc208.png" alt="gpm04"></p>
+<p>如果当前有空闲的p，而且没有处于spinning状态(线程自旋)的M，也就是说所有M都在忙，同时主协程以及开始执行了，那么就调用wakep函数，启动一个m并把它置为spinning状态。spinning状态的M启动后，忙不迭的执行调度循环寻找任务，从本地runq，到全局runq，再到其他p的runq，只为找到一个待执行的G，却也敌不过另一边，main goroutine早早的结束了进程。</p>
+<p> <img src="/../images/gc301.png" alt="gpm04"></p>
+<p>上一次我们使用time.Sleep,拖延了一个main.main返回的时间，这一次我们通过等待一个channel，看一下协程如何让出又是如何恢复的。channel对应的数据结构是runtime.hchan，里面有channel缓冲区地址，大小，读写下标，也记录着元素类型，大小，及channel是否已关闭，还记录着等待channel的那些G的读队列和写队列，自然也少不了保护channel线程安全的锁。我们的例子中创建的channel是无缓冲的。<br>    <img src="/../images/gc302.png" alt="gpm04"></p>
+<p>&lt;-ch，尝试读取 会被编译器转换成runtime.chanrecv1函数调用，而它实际上会调用runtime.channrecv函数。这个函数的具体逻辑我们到介绍channel时再展开，目前只关注我们的例子会涉及到的一小部分。ch没有缓冲区，目前也没有哪个G等在sendq中，简言之，没数据可读。所以当前goroutine会阻塞在ch这里等待数据，当前goroutine自然是main goroutine，而channel的读等待队列，是一个sudog类型的链表，链表项会记录哪个G等在这里，读到数据后要放到哪里等等。<br><img src="/../images/gc300.png" alt="gpm04"></p>
+<p>然后chanrecv通过gopark函数使用当前的goroutine挂起，让出CPU。gopark首先会调用acquirem静止当前M被抢占，然后把main goroutine的状态从_Grunning修改为_Gwaiting，main goroutine不再是执行中的状态了，接下来调用releasem解除M的禁止抢占。最后通过调用mcall(park_m),它主要负责保存当前协程的执行现场，然后切换到g0栈，调用由mcall的参数传入的这个函数，对应到这里就是park_m函数，park_m会根据g0找到当前M，把m.curg置为nil，所以当前m正在执行的G，便不再是mian goroutine了，最后会调用<strong>schedult()寻找下一个待执行的G</strong>，经过上面这一番折腾，hello goroutine无论是得到当前m的调度，还是被其他m抢了去，总之是可以执行了。<br><img src="/../images/gc303.png" alt="gpm04"></p>
+<p>等到hello goroutine完成执行，关闭main goroutine等待的channel时，不只会修改channel的closed状态，还会处理等待队列里的这些G。我们这个例子，只在读队列里有一个main goroutine在等待，所以会把它接收的数据置为nil，并最终调用goready函数结束这个G的等待状态，而goready函数会切换到g0栈，并执行runtime.ready函数，目前待ready的协程自然是main goroutine，此时它的状态是_Gwaiting,接下来被修改为_Grunnable,表示它又可以被调度执行了，然后它会被放到当前P的本地runq中，同协程创建时一样，接下来也会检查是否有空闲的P，并且没有spinning状态的m，是的话也会调用wakep()函数启动新的m，接下来hello goroutine结束，main goroutine得到调度执行，最终结束进程。<br><strong>time.Sleep和channel底层都会调用gopark来实现协程让出，都会使用goready把协程恢复到runnable状态放回到runq中</strong>。</p>
+<p><img src="/../images/gc300.png" alt="gpm04"></p>
 
       </div>
       
         <div class="prev-or-next">
           <div class="post-foot-next">
             
-              <a href="/2022/08/08/%E7%B4%A2%E5%BC%95%E5%A4%B1%E6%95%88%E5%9C%BA%E6%99%AF/" target="_self">
+              <a href="/2022/08/10/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-Goroutine%20GMP%E4%B8%89/" target="_self">
                 <i class="iconfont icon-chevronleft"></i>
                 <span>Prev</span>
               </a>
@@ -234,6 +224,11 @@ MathJax = {
           </div>
           <div class="post-foot-prev">
             
+              <a href="/2022/08/10/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-Goroutine%20GMP%E4%B8%80/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
           </div>
         </div>
       
@@ -246,7 +241,7 @@ MathJax = {
     <div class="title">Contents</div>
     <div class="catalog-content">
       
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A6%82%E5%BF%B5%E7%90%86%E8%A7%A3"><span class="toc-text">概念理解</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%90%86%E8%A7%A3"><span class="toc-text">理解</span></a></li></ol>
       
     </div>
   </div>
@@ -537,12 +532,12 @@ MathJax = {
       </a>
       <div class="share-content hidden">
         
-          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + GPM%E6%A8%A1%E5%9E%8B%E4%B8%80 + '&url=' + http%3A%2F%2Fgithub.com%2F2022%2F08%2F10%2FGolang%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-Goroutine%2F + '" target="_blank" title="Twitter">
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + GMP%E6%A8%A1%E5%9E%8B%E4%BA%8C + '&url=' + http%3A%2F%2Fgithub.com%2F2022%2F08%2F10%2FGolang%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-Goroutine%2520GMP%25E4%25BA%258C%2F + '" target="_blank" title="Twitter">
             <i class="iconfont icon-twitter"></i>
           </a>
         
         
-          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/2022/08/10/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-Goroutine/" target="_blank" title="Facebook">
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/2022/08/10/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-Goroutine%20GMP%E4%BA%8C/" target="_blank" title="Facebook">
             <i class="iconfont icon-facebooksquare"></i>
           </a>
         

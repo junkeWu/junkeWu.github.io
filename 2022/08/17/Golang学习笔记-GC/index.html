@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="keywords" content="" />
+  <meta name="author" content="Junke Wu" />
+  <meta name="description" content="坚持持续学习..." />
+  
+  
+  <title>
+    
+      golang-GC 
+      
+      
+      |
+    
+     主页
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="icon" href="/images/favicon.png">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  
+<link rel="stylesheet" href="/css/color-scheme.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+<link rel="stylesheet" href="/css/comments.css">
+
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+  <!-- fancybox -->
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <script async src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+
+  <!-- clipboard -->
+  
+    <script src="https://unpkg.com/clipboard@2/dist/clipboard.min.js"></script>
+    
+<script src="/js/codeCopy.js"></script>
+
+  
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.png" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">junke Wu</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">golang-GC</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-08-17 17:09:13
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags" title="Tags"></i>
+                
+                <span class="span--tag">
+                  <a href="/tags/golang/" title="golang">
+                    <b>#</b> golang
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h2 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h2><h3 id="概念了解"><a href="#概念了解" class="headerlink" title="概念了解"></a>概念了解</h3><p>Root set根节点就是发现堆内存可达数据的一组起点，一般为bss段、数据段以及协程栈对应的元数据。</p>
+<p>GC用来清理堆，为什么还要扫描栈？</p>
+<ul>
+<li>因为栈上的对象会引用堆上的对象</li>
+</ul>
+<h3 id="带着问题去了解："><a href="#带着问题去了解：" class="headerlink" title="带着问题去了解："></a>带着问题去了解：</h3><ul>
+<li>go v1.5为什么只在堆空间启动写屏障，栈空间不启动？</li>
+<li>gov1.8为什么整个过程不需要STW？</li>
+<li>三色标记法怎么去确定对象？</li>
+</ul>
+<h2 id="Go-V1-3-标记清除法"><a href="#Go-V1-3-标记清除法" class="headerlink" title="Go V1.3-标记清除法"></a>Go V1.3-标记清除法</h2><ul>
+<li>标记(Mark phase)</li>
+<li>清除(Sweep phase)</li>
+</ul>
+<p><img src="/../images/gc01.png"></p>
+<h3 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h3><ol>
+<li>暂停程序的正常执行流程(开始STW)</li>
+<li>从Root Set根节点出发找出所有可达对象</li>
+<li>给所有可达对象坐上标记</li>
+<li>开始清除未标记的不可达对象</li>
+<li>恢复程序的正常执行流程(停止STW)</li>
+</ol>
+<h3 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h3><ol>
+<li>STW，stop the world；让程序暂停，程序出现卡顿 (重要问题)</li>
+<li>标记需要扫描整个heap</li>
+<li>清除数据会产生heap碎片</li>
+</ol>
+<h2 id="Go-V1-5-三色标记法"><a href="#Go-V1-5-三色标记法" class="headerlink" title="Go V1.5-三色标记法"></a>Go V1.5-三色标记法</h2><p>三色标记法实际上就是通过三个阶段的标记来确定清楚的对象都有哪些。</p>
+<h3 id="步骤-1"><a href="#步骤-1" class="headerlink" title="步骤"></a>步骤</h3><ul>
+<li>暂停程序的正常执行流程(开始STW)</li>
+<li>只要是新创建的对象，默认为白色</li>
+<li>GC开始时，从根节点开始遍历所有对象，把遍历到的第一层对象从白色变为灰色</li>
+<li>遍历一次灰色集合，将灰色对象引用的对象变为灰色，把原来灰色对象变为黑色</li>
+<li>重复第3步骤，直到没有灰色对象</li>
+<li>回收所有白色对象，白色对象没有被任何引用，也就是垃圾</li>
+<li>恢复程序的正常执行流程(停止STW)</li>
+</ul>
+<h3 id="图示"><a href="#图示" class="headerlink" title="图示"></a>图示</h3><p><img src="/../images/gc02.png" alt="gc02"></p>
+<p><img src="/../images/gc.png" alt="gc"></p>
+<p><img src="/../images/gc03.png" alt="gc03"></p>
+<p><img src="/../images/gc04.png" alt="gc04"></p>
+<p><img src="/../images/gc05.png" alt="gc05"></p>
+<p><img src="/../images/gc06.png" alt="gc06"></p>
+<p><img src="/../images/gc07.png" alt="gc07"></p>
+<h3 id="去除STW的三色标记法的图示"><a href="#去除STW的三色标记法的图示" class="headerlink" title="去除STW的三色标记法的图示"></a>去除STW的三色标记法的图示</h3><p>不难看出，我们上面已经清楚的体现三色的特性。但是这里面可能会有很多并发流程均会被扫描，执行并发流程的内存可能相互依赖，为了在GC过程中保证数据的安全，我们在开始三色标记之前就会加上STW，在扫描确定黑白对象之后再放开STW。但是很明显这样的GC扫描的性能实在是太低了。</p>
+<p>但是</p>
+<ul>
+<li>如果三色标记过过程不启动STW</li>
+</ul>
+<p><img src="/../images/gc10.png" alt="gc10"></p>
+<p>​							已经标记为灰色的对象2，有指针指向白色的对象3		</p>
+<p><img src="/../images/gc11.png" alt="gc11"></p>
+<p>​			在还没有扫描到对象2，已经标记为黑色的对象4，创建指针q，指向对象3</p>
+<p><img src="/../images/gc12.png" alt="gc12"></p>
+<p>正常执行算法逻辑，对象2,3标记为黑色，而对象3，因为对象4已经不会再扫描，而等待被挥手清除</p>
+<p><img src="/../images/gc13.png" alt="gc13"></p>
+<p>​							对象3，一个被正常引用的对象，被无辜清除了</p>
+<h3 id="去除STW的三色标记法产生的问题"><a href="#去除STW的三色标记法产生的问题" class="headerlink" title="去除STW的三色标记法产生的问题"></a>去除STW的三色标记法产生的问题</h3><p>最后我们才发现，本来是对象4合法引用的对象3，却被GC给“误杀”回收掉了。</p>
+<p>可以看出，有两种情况，在三色标记法中，是不希望被发生的。</p>
+<ul>
+<li>一个白色对象被黑色对象引用(白色被挂在黑色下)</li>
+<li>灰色对象与它之间的可达的白色对象遭到破坏(灰色同时丢了该白色)</li>
+</ul>
+<p>如果当以上两个条件同时满足时，就会出现对象丢失现象! </p>
+<p>并且，如图所示的场景中，如果示例中的白色对象3还有很多下游对象的话, 也会一并都清理掉。</p>
+<p>为了防止这种现象的发生，最简单的方式就是STW，直接禁止掉其他用户程序对对象引用关系的干扰，但是STW的过程有明显的资源浪费，对所有的用户程序都有很大影响。那么是否可以在保证对象不丢失的情况下合理的尽可能的提高GC效率，减少STW时间呢？答案是可以的，我们只要使用一种机制，尝试去破坏上面的两个必要条件就可以了。</p>
+<h2 id="Go-V1-8-三色标记-混合写屏障"><a href="#Go-V1-8-三色标记-混合写屏障" class="headerlink" title="Go V1.8-三色标记+混合写屏障"></a>Go V1.8-三色标记+混合写屏障</h2><h3 id="“强-弱”-三色不变式"><a href="#“强-弱”-三色不变式" class="headerlink" title="“强-弱” 三色不变式"></a>“强-弱” 三色不变式</h3><p>我们让GC回收器，满足下面两种情况之一时，即<strong>可保对象不丢失</strong>。 这两种方式就是“强三色不变式”和“ 弱三色不变式”</p>
+<h3 id="强三色不变式"><a href="#强三色不变式" class="headerlink" title="强三色不变式"></a>强三色不变式</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">强三色不变式:强制性的不允许黑色对象引用白色对象(不存在黑色对象引用到白色对象的指针)</span><br><span class="line">这样就不会出现有白色对象被误删的情况</span><br></pre></td></tr></table></figure>
+
+<p><img src="/../images/gc15.png" alt="gc15"></p>
+<h3 id="弱三色不变式"><a href="#弱三色不变式" class="headerlink" title="弱三色不变式"></a>弱三色不变式</h3><p><code>弱三色不变式:黑色对象可以引用白色对象，但是这个白色对象必须存在其他灰色对象对它的引用，或者可达它的链路上游存在灰色对象</code><br>所有被黑色对象引用的白色对象都处于灰色保护状态</p>
+<p><img src="/../images/gc16.png" alt="gc16"></p>
+<h3 id="两种屏障方式"><a href="#两种屏障方式" class="headerlink" title="两种屏障方式"></a>两种屏障方式</h3><p>为了遵循上述的两个方式，GC算法演进到两种屏障方式，分别为“插入写屏障”, “删除写屏障”。</p>
+<p>使用了插入写屏障或者删除写屏障的三色标记法，可以大幅减少STW的时间</p>
+<h3 id="插入写屏障"><a href="#插入写屏障" class="headerlink" title="插入写屏障"></a>插入写屏障</h3><h4 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h4><p><strong>强三色不变式</strong></p>
+<p>行为-&gt;插入写屏障:在A对象引用B对象的时候，B对象被标记为灰色。(将B挂在A下游，B必须被标记为灰色)</p>
+<p>满足-&gt;强三色不变式. (不存在黑色对象引用白色对象的情况了， 因为白色会强制变成灰色)</p>
+<p>注:栈空间的特点是容量小,但是要求相应速度快,因为函数调用弹出频繁使用, 所以“插入写屏障”机制,对于栈中的对象是不生效的，“插入写屏障” 仅仅使用在堆中生效。所以在结束时需要STW来重新扫描栈，执行三色标记法回收白色垃圾，这次STW大约的时间在10~100ms间。</p>
+<p><strong>插入写屏障不对栈生效！</strong></p>
+<h5 id="图示-1"><a href="#图示-1" class="headerlink" title="图示"></a>图示</h5><p>1.<img src="/../images/gc21.png" alt="gc21"></p>
+<ol start="2">
+<li></li>
+</ol>
+<p><img src="/../images/gc30.png" alt="gc21"></p>
+<ol start="3">
+<li></li>
+</ol>
+<p><img src="/../images/gc31.png" alt="gc21"></p>
+<ol start="4">
+<li></li>
+</ol>
+<p><img src="/../images/gc32.png" alt="gc21"></p>
+<ol start="5">
+<li></li>
+</ol>
+<p><img src="/../images/gc33.png" alt="gc21"></p>
+<ol start="6">
+<li></li>
+</ol>
+<p><img src="/../images/gc36.png" alt="gc21"></p>
+<p>当全部三色标记扫描之后,栈上有可能依然存在白色对象被引用的情况(如上图的对象9). 所以要对栈重新进行三色标记扫描, 但这次为了对象不丢失, 要对本次标记扫描启动STW暂停. 直到栈空间的三色标记结束.</p>
+<ol start="7">
+<li></li>
+</ol>
+<p><img src="/../images/gc37.png" alt="gc21">8.</p>
+<p><img src="/../images/gc38.png" alt="gc21"></p>
+<p>9</p>
+<p><img src="/../images/gc39.png" alt="gc21"></p>
+<ol start="10">
+<li></li>
+</ol>
+<p><img src="/../images/gc40.png" alt="gc21"></p>
+<p>最后将栈和堆空间 扫描剩余的全部白色节点清除. 这次STW大约的时间在10~100ms间</p>
+<h3 id="删除写屏障"><a href="#删除写屏障" class="headerlink" title="删除写屏障"></a>删除写屏障</h3><p>弱三色不变式</p>
+<h4 id="介绍-1"><a href="#介绍-1" class="headerlink" title="介绍"></a>介绍</h4><p>行为-&gt;<code>被删除的对象，如果自身为灰色或者白色，那么被标记为灰色</code><br>满足-&gt;弱三色不变式. (保护灰色对象到白色对象的路径不会断)</p>
+<p>这种方式的回收精度低，一个对象即使被删除了最后一个指向它的指针也依旧可以活过这一轮，在下一轮GC中被清理掉。</p>
+<p>堆栈皆可用弱三色不变式！</p>
+<h5 id="图示-2"><a href="#图示-2" class="headerlink" title="图示"></a>图示</h5><p>1. </p>
+<p><img src="/../images/gc50.png" alt="gc21"></p>
+<p>2. </p>
+<p><img src="/../images/gc51.png" alt="gc21"></p>
+<ol start="3">
+<li></li>
+</ol>
+<p><img src="/../images/gc53.png" alt="gc21"></p>
+<ol start="4">
+<li></li>
+</ol>
+<p><img src="/../images/gc64.png" alt="gc21"></p>
+<ol start="5">
+<li></li>
+</ol>
+<p><img src="/../images/gc55.png" alt="gc21"></p>
+<ol start="6">
+<li></li>
+</ol>
+<p><img src="/../images/gc56.png" alt="gc21"></p>
+<ol start="7">
+<li></li>
+</ol>
+<p><img src="/../images/gc57.png" alt="gc21"></p>
+<h2 id="两种屏障的缺点"><a href="#两种屏障的缺点" class="headerlink" title="两种屏障的缺点"></a>两种屏障的缺点</h2><ul>
+<li>插入写屏障：结束时需要STW来重新扫描栈，标记栈上引用的白色对象的存活；</li>
+<li>删除写屏障：回收精度低，GC开始时STW扫描堆栈来记录初始快照，这个过程会保护开始时刻的所有存活对象。</li>
+</ul>
+<h2 id="混合写屏障"><a href="#混合写屏障" class="headerlink" title="混合写屏障"></a>混合写屏障</h2><p>Go V1.8版本引入了混合写屏障机制（hybrid write barrier），避免了对栈re-scan的过程，极大的减少了STW的时间。结合了两者的优点。</p>
+<p>注意混合写屏障是GC的一种屏障机制，所以只是当程序执行GC的时候，才会触发这种机制</p>
+<p><strong>Golang中的混合写屏障满足弱三色不变式，结合了删除写屏障和插入写屏障的优点，只需要在开始时并发扫描各个goroutine的栈，使其变黑并一直保持，这个过程不需要STW，而标记结束后，因为栈在扫描后始终是黑色的，也无需再进行re-scan操作了，减少了STW的时间。</strong></p>
+<h3 id="步骤-2"><a href="#步骤-2" class="headerlink" title="步骤"></a>步骤</h3><ol>
+<li>GC开始将栈上的对象全部扫描并标记为黑色(之后不再进行第二次重复扫描，无需STW)</li>
+<li>GC期间，任何在栈上创建的新对象，均为黑色</li>
+<li>被删除的对象标记为灰色</li>
+<li>被添加的对象标记为灰色</li>
+</ol>
+<p>满足-&gt;变形的弱三色不变式</p>
+<p>这里我们注意， 屏障技术(步骤三四)是不在栈上应用的，因为要保证栈的运行效率.</p>
+<h5 id="图示-3"><a href="#图示-3" class="headerlink" title="图示"></a>图示</h5><p>1、</p>
+<p><img src="/../images/gc71.png" alt="gc21"></p>
+<p>2、</p>
+<p><img src="/../images/gc72.png" alt="gc21"></p>
+<h4 id="混合写屏障的场景分析"><a href="#混合写屏障的场景分析" class="headerlink" title="混合写屏障的场景分析"></a>混合写屏障的场景分析</h4><h5 id="对象被堆对象删除引用，被栈对象引用"><a href="#对象被堆对象删除引用，被栈对象引用" class="headerlink" title="对象被堆对象删除引用，被栈对象引用"></a>对象被堆对象删除引用，被栈对象引用</h5><p>3、</p>
+<p><img src="/../images/gc75.png" alt="gc21"></p>
+<p>4、</p>
+<p><img src="/../images/gc76.png" alt="gc21"></p>
+<h5 id="对象被栈对象删除引用，被另一个栈对象引用"><a href="#对象被栈对象删除引用，被另一个栈对象引用" class="headerlink" title="对象被栈对象删除引用，被另一个栈对象引用"></a>对象被栈对象删除引用，被另一个栈对象引用</h5><p>5、</p>
+<p><img src="/../images/gc77.png" alt="gc21"></p>
+<p>6、</p>
+<p><img src="/../images/gc78.png" alt="gc21"></p>
+<p>7、</p>
+<p><img src="/../images/gc79.png" alt="gc21"></p>
+<p>8、</p>
+<p><img src="/../images/gc80.png" alt="gc21"></p>
+<p>9、</p>
+<p><img src="/../images/gc81.png" alt="gc21"></p>
+<p>10、</p>
+<p><img src="/../images/gc82.png" alt="gc21"></p>
+<p>11、</p>
+<p><img src="/../images/gc83.png" alt="gc21"></p>
+<p>12、</p>
+<p><img src="/../images/gc84.png" alt="gc21"></p>
+<p>13、</p>
+<p><img src="/../images/gc85.png" alt="gc21"></p>
+<p>14、</p>
+<p><img src="/../images/gc86.png" alt="gc21"></p>
+<p>15、</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p> 以上便是Golang的GC全部的标记-清除逻辑及场景演示全过程。</p>
+<p>GoV1.3 - 普通标记清除法，整体过程需要启动STW，效率极低。</p>
+<p>GoV1.5 - 三色标记法， 堆空间启动写屏障，栈空间不启动，全部扫描之后，需要重新扫描一次栈(需要STW)，效率普通</p>
+<p>GoV1.8 - 三色标记法+混合写屏障机制， 栈空间不启动，堆空间启动。整个过程几乎不需要STW，效率较高。</p>
+<p>几乎不需要STW：GC标记准备阶段和GC标记结束阶段还是需要STW 来通知所有的Goroutine 我进入垃圾回收阶段了,然后启用&#x2F;关闭屏障机制,但是这个耗时很小,一般几十微秒</p>
+<p>混合写屏障的标记过程中不再需要STW，标记准备 和 标记结束 还是需要STW的</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/08/10/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-Goroutine%20GMP%E4%B8%80/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-08-17 17:09:13
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags" title="Tags"></i>
+                    
+                    <span class="span--tag">
+                      <a href="/tags/golang/" title="golang">
+                        <b>#</b> golang
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2022/08/24/Apache%20Bench%20%E5%8E%8B%E6%B5%8B%E5%B7%A5%E5%85%B7/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86"><span class="toc-text">前置知识</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A6%82%E5%BF%B5%E4%BA%86%E8%A7%A3"><span class="toc-text">概念了解</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B8%A6%E7%9D%80%E9%97%AE%E9%A2%98%E5%8E%BB%E4%BA%86%E8%A7%A3%EF%BC%9A"><span class="toc-text">带着问题去了解：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Go-V1-3-%E6%A0%87%E8%AE%B0%E6%B8%85%E9%99%A4%E6%B3%95"><span class="toc-text">Go V1.3-标记清除法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A4"><span class="toc-text">步骤</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9"><span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Go-V1-5-%E4%B8%89%E8%89%B2%E6%A0%87%E8%AE%B0%E6%B3%95"><span class="toc-text">Go V1.5-三色标记法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A4-1"><span class="toc-text">步骤</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%BE%E7%A4%BA"><span class="toc-text">图示</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%BB%E9%99%A4STW%E7%9A%84%E4%B8%89%E8%89%B2%E6%A0%87%E8%AE%B0%E6%B3%95%E7%9A%84%E5%9B%BE%E7%A4%BA"><span class="toc-text">去除STW的三色标记法的图示</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%BB%E9%99%A4STW%E7%9A%84%E4%B8%89%E8%89%B2%E6%A0%87%E8%AE%B0%E6%B3%95%E4%BA%A7%E7%94%9F%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-text">去除STW的三色标记法产生的问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Go-V1-8-%E4%B8%89%E8%89%B2%E6%A0%87%E8%AE%B0-%E6%B7%B7%E5%90%88%E5%86%99%E5%B1%8F%E9%9A%9C"><span class="toc-text">Go V1.8-三色标记+混合写屏障</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%80%9C%E5%BC%BA-%E5%BC%B1%E2%80%9D-%E4%B8%89%E8%89%B2%E4%B8%8D%E5%8F%98%E5%BC%8F"><span class="toc-text">“强-弱” 三色不变式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%BA%E4%B8%89%E8%89%B2%E4%B8%8D%E5%8F%98%E5%BC%8F"><span class="toc-text">强三色不变式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%B1%E4%B8%89%E8%89%B2%E4%B8%8D%E5%8F%98%E5%BC%8F"><span class="toc-text">弱三色不变式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%A4%E7%A7%8D%E5%B1%8F%E9%9A%9C%E6%96%B9%E5%BC%8F"><span class="toc-text">两种屏障方式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E5%86%99%E5%B1%8F%E9%9A%9C"><span class="toc-text">插入写屏障</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-text">介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9B%BE%E7%A4%BA-1"><span class="toc-text">图示</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E5%86%99%E5%B1%8F%E9%9A%9C"><span class="toc-text">删除写屏障</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D-1"><span class="toc-text">介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9B%BE%E7%A4%BA-2"><span class="toc-text">图示</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%A4%E7%A7%8D%E5%B1%8F%E9%9A%9C%E7%9A%84%E7%BC%BA%E7%82%B9"><span class="toc-text">两种屏障的缺点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%B7%E5%90%88%E5%86%99%E5%B1%8F%E9%9A%9C"><span class="toc-text">混合写屏障</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A4-2"><span class="toc-text">步骤</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9B%BE%E7%A4%BA-3"><span class="toc-text">图示</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B7%B7%E5%90%88%E5%86%99%E5%B1%8F%E9%9A%9C%E7%9A%84%E5%9C%BA%E6%99%AF%E5%88%86%E6%9E%90"><span class="toc-text">混合写屏障的场景分析</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%AF%B9%E8%B1%A1%E8%A2%AB%E5%A0%86%E5%AF%B9%E8%B1%A1%E5%88%A0%E9%99%A4%E5%BC%95%E7%94%A8%EF%BC%8C%E8%A2%AB%E6%A0%88%E5%AF%B9%E8%B1%A1%E5%BC%95%E7%94%A8"><span class="toc-text">对象被堆对象删除引用，被栈对象引用</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%AF%B9%E8%B1%A1%E8%A2%AB%E6%A0%88%E5%AF%B9%E8%B1%A1%E5%88%A0%E9%99%A4%E5%BC%95%E7%94%A8%EF%BC%8C%E8%A2%AB%E5%8F%A6%E4%B8%80%E4%B8%AA%E6%A0%88%E5%AF%B9%E8%B1%A1%E5%BC%95%E7%94%A8"><span class="toc-text">对象被栈对象删除引用，被另一个栈对象引用</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="github" href="https://github.com/junkeWu">
+            <i class="iconfont icon-github"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="email" href="">
+            <i class="iconfont icon-envelope"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a href="https://github.com/junkeWu">Copyright © 2022 junkeWu</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a href="https://github.com/zchengsite/hexo-theme-oranges">Theme by zchengsite | Powered by Hexo</a>
+        
+    </div>
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + golang-GC + '&url=' + http%3A%2F%2Fgithub.com%2F2022%2F08%2F17%2FGolang%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25AC%2594%25E8%25AE%25B0-GC%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/2022/08/17/Golang%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-GC/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
