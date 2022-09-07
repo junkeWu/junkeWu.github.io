@@ -210,6 +210,7 @@ MathJax = {
 <p><strong>之前介绍过，协程创建时，会伪装一个执行现场存到g.sched中，所以即使这个G初次执行，也是有一个完美的执行现场的。</strong></p>
 <p><img src="/../images/gc800.png" alt="gc800"></p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><strong>协程在某些情况下会主动让出</strong>，但有时<strong>也需要设置stackPreemt标识</strong>，或<strong>异步抢占的方式来通知它让出</strong>。也了解了<strong>调度程序如何获取待执行的G并把它运行起来</strong>。期间还穿插介绍了<strong>监控线程的主要工作任务”保障计时器正常工作</strong>，<strong>执行网络轮询，抢占长时间运行的，或处在系统调用的P</strong>“，这些都是为了保障程序健康高效的执行，其实<strong>监控线程还有一项任务，就是强制执行GC</strong>。</p>
+<p><img src="/../images/gc1000.png" alt="gc800"></p>
 
       </div>
       
