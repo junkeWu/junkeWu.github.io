@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="keywords" content="" />
+  <meta name="author" content="Junke Wu" />
+  <meta name="description" content="坚持持续学习..." />
+  
+  
+  <title>
+    
+      Kubernates核心概念 
+      
+      
+      |
+    
+     主页
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <link rel="icon" href="/images/favicon.png">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  
+<link rel="stylesheet" href="/css/color-scheme.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+<link rel="stylesheet" href="/css/comments.css">
+
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+  <!-- fancybox -->
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <script async src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+
+  <!-- clipboard -->
+  
+    <script src="https://unpkg.com/clipboard@2/dist/clipboard.min.js"></script>
+    
+<script src="/js/codeCopy.js"></script>
+
+  
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.png" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">junke Wu</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+<!-- LaTex Display -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">Kubernates核心概念</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime" title="Update time"></i>
+          2022-09-18 09:00:00
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags" title="Tags"></i>
+                
+                <span class="span--tag">
+                  <a href="/tags/k8s/" title="k8s">
+                    <b>#</b> k8s
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h1 id="一、kubernetes核心概念"><a href="#一、kubernetes核心概念" class="headerlink" title="一、kubernetes核心概念"></a>一、kubernetes核心概念</h1><h2 id="1-1-Pod"><a href="#1-1-Pod" class="headerlink" title="1.1 Pod"></a>1.1 Pod</h2><p>Pod是可以在 Kubernetes 中创建和管理的、最小的可部署的计算单元。</p>
+<p>Pod就像豌豆荚一样，其中包含着一组（一个或多个）容器； 这些容器共享存储、网络、以及怎样运行这些容器的声明。</p>
+<p>Pod就像一台物理服务器一样，其中包含一个或多个应用容器， 这些容器中运行着用户应用程序。</p>
+<h2 id="1-2-Controller"><a href="#1-2-Controller" class="headerlink" title="1.2 Controller"></a>1.2 Controller</h2><p>在 Kubernetes 中，用于管理和运行Pod的对象</p>
+<p>在 Kubernetes 中，控制器通过监控集群的公共状态，并致力于将当前状态转变为期望的状态</p>
+<p><strong>举例说明Controller(控制器)作用：房间里的温度自动调节器</strong></p>
+<p><strong>当你设置了温度，告诉了温度自动调节器你的<em>期望状态（Desired State）</em>。 房间的实际温度是<em>当前状态（Current State）</em>。 通过对设备的开关控制，温度自动调节器让其当前状态接近期望状态。</strong></p>
+<p>一个控制器至少追踪一种类型的 Kubernetes 资源。这些对象有一个代表期望状态的 <code>spec</code> 字段。 该资源的控制器负责确保其当前状态接近期望状态。</p>
+<p>不同的类型的控制器所实现的控制方式不一样，例如：</p>
+<ul>
+<li>deployment <ul>
+<li>部署无状态应用</li>
+<li>部署无状态应用: 认为pod 都一样，没有顺序要求， 不用考虑在哪个node 运行，随意进行扩展和伸缩</li>
+<li>管理Pod和 ReplicaSet</li>
+<li>部署、滚动升级等</li>
+<li>典型的像web服务、分布式服务等</li>
+</ul>
+</li>
+<li>StatefulSet <ul>
+<li>部署有状态应用</li>
+<li>有状态应用，每个pod 都独立运行，保持pod 启动顺序和唯一性； 有唯一的网络标识符，持久存储； 有序，比如mysql 主从； 主机名称固定。 而且其扩容以及升级等操作也是按顺序进行的操作。</li>
+</ul>
+</li>
+<li>DaemonSet <ul>
+<li>部署守护进程</li>
+<li>DaemonSet保证在每个Node上都运行一个容器副本，常用来部署一些集群的日志、监控或者其他系统管理应用。 新加入的node 也同样运行在一个pod 里面。</li>
+</ul>
+</li>
+<li>job <ul>
+<li>一次性任务</li>
+<li>Job负责批量处理短暂的一次性任务 (short lived one-off tasks)，即仅执行一次的任务，它保证批处理任务的一个或多个Pod成功结束。</li>
+</ul>
+</li>
+<li>Cronjob <ul>
+<li>周期性定时任务</li>
+</ul>
+</li>
+</ul>
+<h2 id="1-3-Label"><a href="#1-3-Label" class="headerlink" title="1.3 Label"></a>1.3 Label</h2><h3 id="1-3-1-Label介绍"><a href="#1-3-1-Label介绍" class="headerlink" title="1.3.1 Label介绍"></a>1.3.1 Label介绍</h3><p>Label是附着到object上（例如Pod）的键值对。可以在创建object的时候指定，也可以在object创建后随时指定。Labels的值对系统本身并没有什么含义，只是对用户才有意义。</p>
+<p>一个Label是一个key&#x3D;value的键值对，其中key与value由用户自己指定。</p>
+<p>Label可以附加到各种资源对象上，例如Node、Pod、Service、RC等，一个资源对象可以定义任意数量的Label，同一个Label也可以被添加到任意数量的资源对象上去，Label通常在资源对象定义时确定，也可以在对象创建后动态添加或者删除。</p>
+<p>我们可以通过指定的资源对象捆绑一个或多个不同的Label来实现多维度的资源分组管理功能，以便于灵活、方便地进行资源分配、调度、配置、部署等管理工作。例如：部署不同版本的应用到不同的环境中；或者监控和分析应用（日志记录、监控、告警）等。</p>
+<p>一些常用abel示例如下所示:</p>
+<p>版本标签：”release” : “stable” , “release” : “canary”…</p>
+<p>环境标签：”environment” : “dev” , “environment” : “production”</p>
+<p>架构标签：”tier” : “frontend” , “tier” : “backend” , “tier” : “middleware”</p>
+<p>分区标签：”partition” : “customerA” , “partition” : “customerB”…</p>
+<p>质量管控标签：”track” : “daily” , “track” : “weekly”</p>
+<p>Label相当于我们熟悉的“标签”，给某个资源对象定义一个Label，就相当于给它打了一个标签，随后可以通过Label Selector（标签选择器）查询和筛选拥有某些Label的资源对象，Kubernetes通过这种方式实现了类似SQL的简单又通用的对象查询机制。</p>
+<h3 id="1-3-2-Label语法及字符集"><a href="#1-3-2-Label语法及字符集" class="headerlink" title="1.3.2 Label语法及字符集"></a>1.3.2 Label语法及字符集</h3><p>Label key的组成：</p>
+<ul>
+<li>不得超过63个字符</li>
+<li>可以使用前缀，使用&#x2F;分隔，前缀必须是DNS子域，不得超过253个字符，系统中的自动化组件创建的label必须指定前缀，<code>kubernetes.io/</code>由kubernetes保留</li>
+<li>起始必须是字母（大小写都可以）或数字，中间可以有连字符、下划线和点</li>
+</ul>
+<p>Label value的组成：</p>
+<ul>
+<li>不得超过63个字符</li>
+<li>起始必须是字母（大小写都可以）或数字，中间可以有连字符、下划线和点</li>
+</ul>
+<h2 id="1-4-Label-Selector"><a href="#1-4-Label-Selector" class="headerlink" title="1.4 Label Selector"></a>1.4 Label Selector</h2><p>通过label selector，客户端／用户可以指定一个object集合，通过label selector对object的集合进行操作。</p>
+<p>Label selector有两种类型：</p>
+<ul>
+<li><em>equality-based（基于等式）</em> ：可以使用<code>=</code>、<code>==</code>、<code>!=</code>操作符，可以使用逗号分隔多个表达式</li>
+<li><em>set-based</em>（基于集合） ：可以使用<code>in</code>、<code>notin</code>、<code>!</code>操作符，另外还可以没有操作符，直接写出某个label的key，表示过滤有某个key的object而不管该key的value是何值，<code>!</code>表示没有该label的object</li>
+</ul>
+<p><strong>举例说明Label Selector</strong></p>
+<p><strong>Label Selector可以被类比为SQL语句中的where查询条件，例如，name&#x3D;redis-slave这个label Selector作用于Pod时，可以被类比为select * from pod where pod’s name &#x3D; ‘redis-slave’这样的语句。</strong></p>
+<h2 id="1-5-Service"><a href="#1-5-Service" class="headerlink" title="1.5 Service"></a>1.5 Service</h2><p>将运行在一组 Pods上的应用程序公开为网络服务的抽象方法。</p>
+<p>由于Pod是非永久性资源对象，如果你使用Controller运行你的应用程序，你可以动态创建和销毁Pod，这样就会导致无法准确访问到所想要访问的Pod</p>
+<p> ：如果一组 Pod（称为“后端”）为集群内的其他 Pod（称为“前端”）提供功能， 那么前端如何找出并跟踪要连接的 IP 地址，以便前端可以使用提供工作负载的后端部分？</p>
+<p>是一组iptables或ipvs规划，通过把客户端的请求转发到服务端（Pod）,如有多个Pod情况，亦可实现负载均衡的效果。</p>
+<p>例如：一个图片处理后端，它运行了 3 个副本（Pod）。这些副本是可互换的 —— 前端不需要关心它们调用了哪个后端副本。 然而组成这一组后端程序的 Pod 实际上可能会发生变化， 前端客户端不应该也没必要知道，而且也不需要跟踪这一组后端的状态。</p>
+<h2 id="1-6-Endpoints"><a href="#1-6-Endpoints" class="headerlink" title="1.6 Endpoints"></a>1.6 Endpoints</h2><p>为Service管理后端Pod，当后端Pod被创建或销毁时，endpoints列表会更新Pod对应的IP地址，以便Service访问请求能够确保被响应。</p>
+<h2 id="1-7-DNS"><a href="#1-7-DNS" class="headerlink" title="1.7 DNS"></a>1.7 DNS</h2><p>为kubernetes集群内资源对象的访问提供名称解析，这样就可以实现通过DNS名称而非IP地址来访问服务。</p>
+<ul>
+<li>实现集群内Service名称解析</li>
+<li>实现集群内Pod内Container中应用访问互联网提供域名解析</li>
+</ul>
+<h1 id="二、Kubernetes核心概念之间的关系"><a href="#二、Kubernetes核心概念之间的关系" class="headerlink" title="二、Kubernetes核心概念之间的关系"></a>二、Kubernetes核心概念之间的关系</h1><h2 id="2-1-Pod与Controller"><a href="#2-1-Pod与Controller" class="headerlink" title="2.1 Pod与Controller"></a>2.1 Pod与Controller</h2><p>pod 是通过Controller 实现应用的运维，比如伸缩，滚动升级等等。pod 和 controller 通过label 标签建立关系。</p>
+<p><img src="/../images/k8s01.png" alt="mvcc01"></p>
+<h2 id="2-2-Pod与Service"><a href="#2-2-Pod与Service" class="headerlink" title="2.2 Pod与Service"></a>2.2 Pod与Service</h2><p>service 是为了防止pod 失联，提供的服务发现，类似于微服务的注册中心。定义一组pod 的访问策略。可以为一组具有相同功能的容器应用提供一个统一的入口地址，并将请求负载分发到后端的各个容器应用上。</p>
+<p>service 通过selector 来管控对应的pod。根据label 和 selector 建立关联，通过service 实现pod 的负载均衡。</p>
+<p><img src="/../images/k8s.png" alt="mvcc01"></p>
+<h2 id="2-3-Service与DNS"><a href="#2-3-Service与DNS" class="headerlink" title="2.3 Service与DNS"></a>2.3 Service与DNS</h2><p>通过DNS实现对Service名称解析，以此达到访问后端Pod目的。</p>
+<h1 id="三、基于kubernetes集群容器化应用的微服务"><a href="#三、基于kubernetes集群容器化应用的微服务" class="headerlink" title="三、基于kubernetes集群容器化应用的微服务"></a>三、基于kubernetes集群容器化应用的微服务</h1><h2 id="3-1-服务部署方式介绍"><a href="#3-1-服务部署方式介绍" class="headerlink" title="3.1 服务部署方式介绍"></a>3.1 服务部署方式介绍</h2><ul>
+<li>单体服务架构<ul>
+<li>所有服务进程运行在同一台主机内</li>
+</ul>
+</li>
+<li>分布式服务架构<ul>
+<li>服务进程分布于不同的主机，其中一台主机出现故障，不影响其它主机上的服务运行</li>
+</ul>
+</li>
+<li>微服务架构<ul>
+<li>使用容器化技术把分布式服务架构运行起来，并实现对不同的服务进程的高可用及快速发布等。</li>
+</ul>
+</li>
+</ul>
+<h2 id="3-2-微服务架构服务组件（kubernetes核心概念）之间关系举例说明"><a href="#3-2-微服务架构服务组件（kubernetes核心概念）之间关系举例说明" class="headerlink" title="3.2 微服务架构服务组件（kubernetes核心概念）之间关系举例说明"></a>3.2 微服务架构服务组件（kubernetes核心概念）之间关系举例说明</h2><p>以在kubernetes集群中运行LNMT应用为例：</p>
+<p>把kubernetes集群看做是一个IDC机房，把LNMT Web架构应用以微服务（kubernetes集群资源对象）的方式部署到kubernetes集群中。</p>
+<p><img src="/../images/k8s03.png" alt="mvcc01"></p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2022/09/09/%E5%A6%82%E4%BD%95%E5%9F%BA%E4%BA%8Eudp%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAtcp/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime" title="Update time"></i>
+              2022-09-18 09:00:00
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags" title="Tags"></i>
+                    
+                    <span class="span--tag">
+                      <a href="/tags/k8s/" title="k8s">
+                        <b>#</b> k8s
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2022/09/20/Docker-namespace%E3%80%81cgroup%E3%80%81overlay/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81kubernetes%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5"><span class="toc-text">一、kubernetes核心概念</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-1-Pod"><span class="toc-text">1.1 Pod</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-2-Controller"><span class="toc-text">1.2 Controller</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-3-Label"><span class="toc-text">1.3 Label</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-1-Label%E4%BB%8B%E7%BB%8D"><span class="toc-text">1.3.1 Label介绍</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-2-Label%E8%AF%AD%E6%B3%95%E5%8F%8A%E5%AD%97%E7%AC%A6%E9%9B%86"><span class="toc-text">1.3.2 Label语法及字符集</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-4-Label-Selector"><span class="toc-text">1.4 Label Selector</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-5-Service"><span class="toc-text">1.5 Service</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-6-Endpoints"><span class="toc-text">1.6 Endpoints</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-7-DNS"><span class="toc-text">1.7 DNS</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81Kubernetes%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-text">二、Kubernetes核心概念之间的关系</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-Pod%E4%B8%8EController"><span class="toc-text">2.1 Pod与Controller</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-Pod%E4%B8%8EService"><span class="toc-text">2.2 Pod与Service</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-Service%E4%B8%8EDNS"><span class="toc-text">2.3 Service与DNS</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E5%9F%BA%E4%BA%8Ekubernetes%E9%9B%86%E7%BE%A4%E5%AE%B9%E5%99%A8%E5%8C%96%E5%BA%94%E7%94%A8%E7%9A%84%E5%BE%AE%E6%9C%8D%E5%8A%A1"><span class="toc-text">三、基于kubernetes集群容器化应用的微服务</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1-%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2%E6%96%B9%E5%BC%8F%E4%BB%8B%E7%BB%8D"><span class="toc-text">3.1 服务部署方式介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2-%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%9E%B6%E6%9E%84%E6%9C%8D%E5%8A%A1%E7%BB%84%E4%BB%B6%EF%BC%88kubernetes%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5%EF%BC%89%E4%B9%8B%E9%97%B4%E5%85%B3%E7%B3%BB%E4%B8%BE%E4%BE%8B%E8%AF%B4%E6%98%8E"><span class="toc-text">3.2 微服务架构服务组件（kubernetes核心概念）之间关系举例说明</span></a></li></ol></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="github" href="https://github.com/junkeWu">
+            <i class="iconfont icon-github"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="email" href="">
+            <i class="iconfont icon-envelope"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a href="https://github.com/junkeWu">Copyright © 2022 junkeWu</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a href="https://github.com/zchengsite/hexo-theme-oranges">Theme by zchengsite | Powered by Hexo</a>
+        
+    </div>
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + Kubernates%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5 + '&url=' + http%3A%2F%2Fgithub.com%2F2022%2F09%2F18%2FKubernetes%25E6%25A0%25B8%25E5%25BF%2583%25E6%25A6%2582%25E5%25BF%25B5%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://github.com/2022/09/18/Kubernetes%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
